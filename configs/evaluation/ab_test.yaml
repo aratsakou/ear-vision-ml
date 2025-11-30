@@ -1,0 +1,14 @@
+# A/B Test Configuration
+ab_test:
+  enabled: true
+  champion_model_id: "model_v1"
+  challenger_model_id: "model_v2"
+  metrics:
+    - name: "accuracy"
+      type: "proportion" # or "mean"
+      min_effect_size: 0.02 # Minimum detectable effect
+      alpha: 0.05
+      power: 0.8
+    - name: "inference_latency"
+      type: "mean"
+      min_effect_size: 5.0 # ms
