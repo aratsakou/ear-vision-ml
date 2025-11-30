@@ -32,9 +32,10 @@ python scripts/generate_fixtures.py \
 echo ""
 echo "Step 2: Training Classification Model (Teacher)..."
 python -m src.tasks.classification.entrypoint \
-  model=cls_mobilenetv3_small \
+  model=cls_mobilenetv3 \
   data=local \
-  data.dataset_dir=$DATA_DIR/classification \
+  data.dataset.mode=manifest \
+  data.dataset.manifest_path=$DATA_DIR/classification/manifest.json \
   training.epochs=2 \
   training.batch_size=8 \
   run.artifacts_dir=$MODELS_DIR/cls_teacher \
@@ -46,7 +47,8 @@ echo "Step 3: Training Segmentation Model..."
 python -m src.tasks.segmentation.entrypoint \
   model=seg_unet \
   data=local \
-  data.dataset_dir=$DATA_DIR/segmentation \
+  data.dataset.mode=manifest \
+  data.dataset.manifest_path=$DATA_DIR/segmentation/manifest.json \
   training.epochs=2 \
   training.batch_size=4 \
   run.artifacts_dir=$MODELS_DIR/seg_model \
@@ -56,14 +58,14 @@ python -m src.tasks.segmentation.entrypoint \
 echo ""
 echo "Step 4: Training Student Model (Distillation)..."
 python -m src.tasks.classification.entrypoint \
-  model=cls_mobilenetv3_small \
+  model=cls_mobilenetv3 \
   data=local \
-  data.dataset_dir=$DATA_DIR/classification \
-  training=distillation \
-  training.distillation.enabled=true \
-  training.distillation.teacher_model_path=$MODELS_DIR/cls_teacher/saved_model \
-  training.distillation.alpha=0.3 \
-  training.distillation.temperature=3.0 \
+  data.dataset.mode=manifest \
+  data.dataset.manifest_path=$DATA_DIR/classification/manifest.json \
+  +training.distillation.enabled=true \
+  +training.distillation.teacher_model_path=$MODELS_DIR/cls_teacher/saved_model \
+  +training.distillation.alpha=0.3 \
+  +training.distillation.temperature=3.0 \
   training.epochs=2 \
   training.batch_size=8 \
   run.artifacts_dir=$MODELS_DIR/cls_student \
