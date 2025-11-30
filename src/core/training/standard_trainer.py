@@ -57,5 +57,21 @@ class StandardTrainer(Trainer):
         
         callbacks = make_callbacks(cfg, str(cfg.run.artifacts_dir))
         
+        # Add Hyperparameter Tuning Callback if enabled
+        # This is a simplified integration. In a real scenario, we might use a dedicated callback class.
+        if cfg.get("tuning", {}).get("enabled", False):
+            from src.core.tuning.vertex_vizier import VertexVizierTuner
+            # We use a simple LambdaCallback for MVP to report metrics
+            # In production, use a robust callback that handles frequency and metric selection
+            tuner = VertexVizierTuner(project=cfg.get("project", "local"), location=cfg.get("location", "local"))
+            
+            def report_tuning_metrics(epoch, logs):
+                # Report validation accuracy or loss
+                metric_name = "val_accuracy" if "val_accuracy" in logs else "val_loss"
+                if metric_name in logs:
+                     tuner.report_metrics("current_trial", {metric_name: logs[metric_name]}, step=epoch)
+
+            callbacks.append(tf.keras.callbacks.LambdaCallback(on_epoch_end=report_tuning_metrics))
+
         result = fit_model(model, cfg, train_ds, val_ds, callbacks)
         return result

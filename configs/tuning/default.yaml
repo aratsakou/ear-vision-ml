@@ -1,0 +1,20 @@
+# Hyperparameter Tuning Configuration
+tuning:
+  enabled: true
+  max_trials: 20
+  max_parallel_trials: 2
+  study_spec:
+    metrics:
+      - metric_id: "val_accuracy"
+        goal: "MAXIMIZE"
+    parameters:
+      - parameter_id: "training.learning_rate"
+        double_value_spec:
+          min_value: 1e-4
+          max_value: 1e-2
+        scale_type: "UNIT_LOG_SCALE"
+      - parameter_id: "model.dropout"
+        double_value_spec:
+          min_value: 0.0
+          max_value: 0.5
+          step_size: 0.1
