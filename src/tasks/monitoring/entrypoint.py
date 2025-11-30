@@ -17,15 +17,17 @@ def main(cfg: DictConfig) -> None:
     """
     log.info(f"Starting monitoring task for {cfg.task.name}")
     
-    # 1. Load Baseline Stats
-    # In a real scenario, we'd load this from the model manifest or dataset stats.json
-    # Here we assume cfg.monitoring.baseline_stats_path is provided
-    baseline_path = Path(cfg.monitoring.baseline_stats_path)
-    if not baseline_path.exists():
-        raise FileNotFoundError(f"Baseline stats not found at {baseline_path}")
+    # Load baseline and target data paths
+    baseline_data_path = Path(cfg.monitoring.baseline_data_path)
+    target_data_path = Path(cfg.monitoring.target_data_path)
     
-    log.info(f"Loading baseline stats from {baseline_path}")
-    baseline_stats = json.loads(baseline_path.read_text())
+    if not baseline_data_path.exists():
+        raise FileNotFoundError(f"Baseline data not found at {baseline_data_path}")
+    if not target_data_path.exists():
+        raise FileNotFoundError(f"Target data not found at {target_data_path}")
+    
+    log.info(f"Loading baseline data from {baseline_data_path}")
+    baseline_df = pd.read_parquet(baseline_data_path)
     
     # Extract baseline histograms/stats to reconstruct distribution approximation or use stats directly
     # For KS-test we need raw data, but we only have stats. 
