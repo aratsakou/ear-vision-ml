@@ -65,7 +65,7 @@ class DriftDetector:
                 "psi": float(psi),
                 "ks_statistic": float(ks_stat),
                 "ks_p_value": float(ks_p_value),
-                "drift_detected": psi >= 0.2 or ks_p_value < 0.05
+                "drift_detected": bool(psi >= 0.2 or ks_p_value < 0.05)
             }
             
         return results
