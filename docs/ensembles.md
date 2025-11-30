@@ -5,5 +5,5 @@
 - Distillation is optional for device constraints.
 
 See:
-- `src/ensembles/device_contract.md`
-- `src/ensembles/distillation.md`
+- `docs/device_contract.md`
+- `docs/distillation.md`
