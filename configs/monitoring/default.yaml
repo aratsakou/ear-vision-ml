@@ -1,0 +1,5 @@
+# Monitoring Configuration
+baseline_data_path: null
+target_data_path: null
+baseline_stats_path: null  # Optional: path to pre-computed stats
+features: []  # List of feature names to monitor
