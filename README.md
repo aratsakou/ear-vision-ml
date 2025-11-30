@@ -162,6 +162,7 @@ Example metrics from smoke tests:
 
 ## 📚 Documentation
 
+- **[Documentation Index](docs/README.md)**: Start here for all guides.
 - **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)**: Complete feature list
 - **[Architecture Refactoring](ARCHITECTURE_REFACTORING.md)**: DI and design patterns guide
 - **[Test Coverage Summary](TEST_COVERAGE_SUMMARY.md)**: Comprehensive test documentation
@@ -180,12 +181,12 @@ Example metrics from smoke tests:
 - **Mixed Precision**: NVIDIA "Mixed Precision Training" (2018)
 
 ## 🤝 Contributing
-
-1. Read `docs/repo_rules.md`
-2. Create feature branch
-3. Add tests (maintain 100% pass rate)
-4. Update relevant docs
-5. Submit PR with devlog entry
+ 
+1.  **Read [CONTRIBUTING.md](CONTRIBUTING.md)** (includes setup, workflow, and rules).
+2.  Create feature branch.
+3.  Add tests (maintain 100% pass rate).
+4.  Update relevant docs.
+5.  Submit PR with devlog entry.
 
 ## 📝 License
 
