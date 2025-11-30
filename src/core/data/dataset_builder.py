@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 
@@ -42,6 +43,7 @@ class DatasetStatistics:
     class_balance_ratio: float  # min_class / max_class
     missing_values: dict[str, int]
     duplicate_count: int
+    baseline_stats: dict[str, Any] = None
 
 
 def compute_dataset_statistics(df: pd.DataFrame, label_column: str = "label") -> DatasetStatistics:
@@ -70,6 +72,21 @@ def compute_dataset_statistics(df: pd.DataFrame, label_column: str = "label") ->
     
     # Duplicates
     duplicate_count = int(df.duplicated().sum())
+
+    # Baseline Statistics for Monitoring (Numeric Columns)
+    baseline_stats = {}
+    numeric_cols = df.select_dtypes(include=[float, int]).columns
+    for col in numeric_cols:
+        if col != label_column and col != "split":
+            baseline_stats[col] = {
+                "mean": float(df[col].mean()),
+                "std": float(df[col].std()),
+                "min": float(df[col].min()),
+                "max": float(df[col].max()),
+                # Store a small histogram for drift detection (e.g. 10 bins)
+                "histogram": [float(x) for x in np.histogram(df[col].dropna(), bins=10)[0]],
+                "bin_edges": [float(x) for x in np.histogram(df[col].dropna(), bins=10)[1]]
+            }
     
     return DatasetStatistics(
         total_samples=len(df),
@@ -78,6 +95,7 @@ def compute_dataset_statistics(df: pd.DataFrame, label_column: str = "label") ->
         class_balance_ratio=balance_ratio,
         missing_values=missing,
         duplicate_count=duplicate_count,
+        baseline_stats=baseline_stats
     )
 
 
@@ -328,6 +346,7 @@ def build_parquet_dataset(
                     "class_balance_ratio": split_stats.class_balance_ratio,
                     "missing_values": split_stats.missing_values,
                     "duplicate_count": split_stats.duplicate_count,
+                    "baseline_stats": split_stats.baseline_stats,
                 }
             else:
                 stats[split] = {"rows": len(df)}
