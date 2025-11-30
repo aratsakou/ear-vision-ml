@@ -1,0 +1,5 @@
+# Distillation Configuration
+enabled: false
+teacher_model_path: null # Path to saved teacher model
+alpha: 0.1 # Weight for student loss (0.1 means 90% distillation loss)
+temperature: 3.0 # Softmax temperature
