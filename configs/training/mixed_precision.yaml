@@ -1,0 +1,37 @@
+epochs: 200
+learning_rate: 0.0005
+optimizer: adam
+batch_size: 16
+
+tensorboard:
+  enabled: true
+  profile_batch: "0"
+
+checkpoint:
+  enabled: true
+  monitor: val_loss
+  mode: min
+  save_freq: 10
+
+early_stopping:
+  enabled: true
+  monitor: val_loss
+  patience: 25
+  min_delta: 0.0005
+  restore_best_weights: true
+
+lr_schedule:
+  enabled: true
+  type: cosine_annealing
+  monitor: val_loss
+
+csv_logger:
+  enabled: true
+
+mixed_precision:
+  enabled: true
+  policy: mixed_float16
+
+gradient_clip:
+  enabled: true
+  clip_norm: 1.0

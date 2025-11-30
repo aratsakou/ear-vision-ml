@@ -1,0 +1,23 @@
+defaults:
+  - task: classification
+  - model: cls_mobilenetv3
+  - data: local
+  - preprocess: full_frame_v1
+  - training: default
+  - export: tflite
+  - evaluation: default
+  - ensemble: cloud_soft_voting
+  - _self_
+
+run:
+  name: "local_smoke"
+  seed: 42
+  artifacts_dir: "artifacts"
+  log_vertex_experiments: false
+  log_bigquery: false
+  log_sql_dataset_version: false
+
+# Global toggles for smoke tests.
+debug:
+  save_preprocess_overlays: true
+  overlay_samples: 4

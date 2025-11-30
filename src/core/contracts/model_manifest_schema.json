@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "model_id",
+    "task_name",
+    "model_name",
+    "version",
+    "dataset_id",
+    "preprocess_pipeline_id",
+    "preprocess_pipeline_version",
+    "input_shape",
+    "outputs",
+    "created_at",
+    "created_by"
+  ],
+  "properties": {
+    "model_id": {
+      "type": "string"
+    },
+    "task_name": {
+      "type": "string"
+    },
+    "model_name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "dataset_id": {
+      "type": "string"
+    },
+    "preprocess_pipeline_id": {
+      "type": "string"
+    },
+    "preprocess_pipeline_version": {
+      "type": "string"
+    },
+    "input_shape": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "outputs": {
+      "type": "object"
+    },
+    "class_labels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "git_commit": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "artifacts": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,11 @@
+type: "local"
+# For local smoke runs, a tiny synthetic dataset is used by default.
+dataset:
+  mode: "synthetic"         # synthetic | manifest
+  manifest_path: null       # required if mode == manifest
+  split: "train"
+  batch_size: 4
+  steps_per_epoch: 2
+  val_steps: 1
+  num_classes: 3
+  image_size: [224, 224]

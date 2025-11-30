@@ -1,0 +1,26 @@
+{
+  "dataset_id": "local_smoke",
+  "task_name": "classification",
+  "version": "v1",
+  "status": "active",
+  "label_mapping_versions": {
+    "ontology": "v1",
+    "labelbox_mappings": ["v1"],
+    "task_mapping": "v1"
+  },
+  "sampling_config": {
+    "hash": "dummy_hash",
+    "parameters": {}
+  },
+  "preprocess_pipeline": {
+    "id": "full_frame_v1",
+    "version": "1.0.0"
+  },
+  "splits": {
+    "train": ["data/train-0000.parquet"],
+    "val": ["data/val-0000.parquet"],
+    "test": ["data/test-0000.parquet"]
+  },
+  "created_by": "test_user",
+  "created_at": "2025-01-01T00:00:00Z"
+}

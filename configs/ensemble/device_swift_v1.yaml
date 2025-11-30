@@ -1,0 +1,3 @@
+ensemble:
+  type: "device_swift_v1"
+  # Documentation-only contract for Swift combiner.

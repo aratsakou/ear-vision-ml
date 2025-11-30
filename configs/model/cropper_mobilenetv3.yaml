@@ -1,0 +1,4 @@
+name: "cropper_mobilenetv3"
+type: "cropper"
+input_shape: [224, 224, 3]
+# Output is [x1,y1,x2,y2,conf] in normalised coordinates.

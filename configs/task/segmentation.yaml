@@ -1,0 +1,2 @@
+name: "segmentation"
+entrypoint: "src.tasks.segmentation.entrypoint"

@@ -1,0 +1,53 @@
+# Hyperparameter tuning configuration for Vertex AI Hyperparameter Tuning
+epochs: 50
+optimizer: adam
+
+# Hyperparameters to tune
+learning_rate: 0.001  # Will be overridden by tuning
+batch_size: 32
+dropout: 0.2
+
+tensorboard:
+  enabled: true
+  profile_batch: "0"
+
+checkpoint:
+  enabled: true
+  monitor: val_loss
+  mode: min
+  save_freq: 10
+
+early_stopping:
+  enabled: true
+  monitor: val_loss
+  patience: 10
+  min_delta: 0.001
+  restore_best_weights: true
+
+csv_logger:
+  enabled: true
+
+# Hyperparameter search space (for documentation)
+# Actual tuning is configured in Vertex AI job spec
+hypertune:
+  metric: val_loss
+  goal: MINIMIZE
+  max_trials: 20
+  max_parallel_trials: 4
+  
+  parameters:
+    learning_rate:
+      type: DOUBLE
+      min: 0.0001
+      max: 0.01
+      scale: LOG
+    
+    dropout:
+      type: DOUBLE
+      min: 0.1
+      max: 0.5
+      scale: LINEAR
+    
+    batch_size:
+      type: DISCRETE
+      values: [16, 32, 64]

@@ -1,0 +1,8 @@
+pipeline_id: "cropper_model_v1"
+version: "1.0.0"
+output_size: [224, 224]
+normalisation: "0_1"
+cropper:
+  # Path to a cropper model artefact (SavedModel directory); when unset, runtime must error if used.
+  saved_model_path: null
+  confidence_threshold: 0.5

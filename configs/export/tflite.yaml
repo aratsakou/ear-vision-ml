@@ -1,0 +1,7 @@
+export:
+  saved_model: true
+  tflite:
+    enabled: true
+    quantize: true
+  coreml:
+    enabled: false

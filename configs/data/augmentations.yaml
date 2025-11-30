@@ -1,0 +1,6 @@
+augment:
+  enabled: true
+  flip_lr: true
+  rotate_deg: 10
+  brightness: 0.1
+  contrast: 0.1

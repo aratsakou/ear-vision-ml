@@ -1,0 +1,42 @@
+# Distributed training configuration for Vertex AI
+epochs: 100
+learning_rate: 0.001
+optimizer: adam
+batch_size: 64  # Per replica
+
+tensorboard:
+  enabled: true
+  profile_batch: "0"
+
+checkpoint:
+  enabled: true
+  monitor: val_loss
+  mode: min
+  save_freq: 5
+
+early_stopping:
+  enabled: true
+  monitor: val_loss
+  patience: 20
+  min_delta: 0.001
+  restore_best_weights: true
+
+lr_schedule:
+  enabled: true
+  type: reduce_on_plateau
+  monitor: val_loss
+  factor: 0.5
+  patience: 7
+  min_lr: 1e-7
+
+csv_logger:
+  enabled: true
+
+mixed_precision:
+  enabled: true
+  policy: mixed_float16
+
+# Distribution strategy
+distribution:
+  strategy: mirrored  # Options: mirrored, multi_worker_mirrored, tpu
+  num_gpus: 2

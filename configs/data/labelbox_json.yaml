@@ -1,0 +1,7 @@
+type: "labelbox_json"
+input:
+  # Offline exports only; no API calls.
+  json_path: null
+mapping:
+  labelbox_project_mapping: null
+  ontology_version: "v1"

@@ -1,0 +1,5 @@
+sampling:
+  fps: 2
+  strategy: "uniform"
+  seed: 42
+  timestamp_rounding_ms: 50

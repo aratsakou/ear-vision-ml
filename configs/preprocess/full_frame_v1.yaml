@@ -1,0 +1,4 @@
+pipeline_id: "full_frame_v1"
+version: "1.0.0"
+output_size: [224, 224]  # H, W
+normalisation: "0_1"

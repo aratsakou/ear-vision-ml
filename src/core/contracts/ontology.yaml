@@ -1,0 +1,16 @@
+# Canonical ear domain ontology (placeholder starter).
+# Replace these IDs with your domain-approved canonical IDs and hierarchy.
+ontology_version: v1
+classes:
+  - id: EAR_NORMAL
+    name: "Normal ear"
+    type: diagnosis
+    parents: []
+  - id: EAR_WAX
+    name: "Cerumen / wax"
+    type: finding
+    parents: []
+  - id: EAR_ABNORMAL
+    name: "Abnormal ear"
+    type: diagnosis_group
+    parents: []

@@ -1,0 +1,5 @@
+name: "cls_mobilenetv3"
+type: "classification"
+input_shape: [224, 224, 3]
+num_classes: 3
+dropout: 0.2

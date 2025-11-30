@@ -1,0 +1,51 @@
+epochs: 100
+learning_rate: 0.001
+optimizer: adam
+batch_size: 32
+
+# TensorBoard logging
+tensorboard:
+  enabled: true
+  profile_batch: "0"  # Disable profiling by default (use "10,20" to profile batches 10-20)
+
+# Model checkpointing
+checkpoint:
+  enabled: true
+  monitor: val_loss
+  mode: min
+  save_freq: 5  # Save every N epochs
+
+# Early stopping
+early_stopping:
+  enabled: false
+  monitor: val_loss
+  patience: 15
+  min_delta: 0.001
+  restore_best_weights: true
+
+# Learning rate scheduling
+lr_schedule:
+  enabled: false
+  type: reduce_on_plateau  # Options: reduce_on_plateau, cosine_annealing, exponential_decay
+  monitor: val_loss
+  factor: 0.5
+  patience: 5
+  min_lr: 1e-7
+  # For exponential_decay:
+  decay_rate: 0.96
+  decay_steps: 10
+
+# CSV logging
+csv_logger:
+  enabled: true
+
+# Mixed precision training (TF 2.4+)
+mixed_precision:
+  enabled: false
+  policy: mixed_float16  # or mixed_bfloat16 for TPUs
+
+# Gradient clipping
+gradient_clip:
+  enabled: false
+  clip_norm: 1.0
+  clip_value: null

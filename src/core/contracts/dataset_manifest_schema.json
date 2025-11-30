@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "dataset_id": { "type": "string" },
+    "task_name": { "type": "string" },
+    "version": { "type": "string" },
+    "status": { "type": "string", "enum": ["active", "archived", "building"] },
+    "label_mapping_versions": {
+      "type": "object",
+      "properties": {
+        "ontology": { "type": "string" },
+        "labelbox_mappings": { "type": "array", "items": { "type": "string" } },
+        "task_mapping": { "type": "string" }
+      },
+      "required": ["ontology", "task_mapping"]
+    },
+    "sampling_config": {
+      "type": "object",
+      "properties": {
+        "hash": { "type": "string" },
+        "parameters": { "type": "object" }
+      },
+      "required": ["hash"]
+    },
+    "preprocess_pipeline": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "required": ["id", "version"]
+    },
+    "splits": {
+      "type": "object",
+      "patternProperties": {
+        "^(train|val|test)$": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "created_by": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": [
+    "dataset_id",
+    "task_name",
+    "version",
+    "status",
+    "label_mapping_versions",
+    "sampling_config",
+    "preprocess_pipeline",
+    "splits",
+    "created_by",
+    "created_at"
+  ]
+}

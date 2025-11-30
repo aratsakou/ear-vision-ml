@@ -1,0 +1,3 @@
+evaluation:
+  enabled: true
+  num_visualisations: 4

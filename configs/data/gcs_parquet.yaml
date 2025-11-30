@@ -1,0 +1,7 @@
+type: "gcs_parquet"
+dataset:
+  dataset_id: null
+  manifest_gcs_path: null
+  split: "train"
+  batch_size: 16
+  prefetch: 2

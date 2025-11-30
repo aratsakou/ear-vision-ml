@@ -1,0 +1,7 @@
+export:
+  saved_model: true
+  tflite:
+    enabled: false
+  coreml:
+    enabled: true
+    # Conversion via coremltools is intentionally not wired in MVP tests.

@@ -1,0 +1,8 @@
+evaluation:
+  enabled: true
+  smoothing:
+    type: "ema"
+    alpha: 0.4
+  hysteresis:
+    on_threshold: 0.7
+    off_threshold: 0.5

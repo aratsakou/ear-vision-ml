@@ -1,0 +1,10 @@
+pipeline_id: "cropper_fallback_v1"
+version: "1.0.0"
+output_size: [224, 224]
+normalisation: "0_1"
+cropper:
+  saved_model_path: null
+  confidence_threshold: 0.5
+fallback:
+  strategy: "centre_square"
+  safety_margin: 0.05
