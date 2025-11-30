@@ -23,6 +23,7 @@ from .reporting import (
     TrainingProgress,
     create_experiment_report,
 )
+from .sql_dataset_logger import SqlDatasetLoggerConfig, log_dataset_version
 
 __all__ = [
     # Logger
@@ -43,5 +44,9 @@ __all__ = [
     "ModelInfo",
     "TrainingProgress",
     "ExperimentResults",
+    "ExperimentResults",
     "create_experiment_report",
+    # SQL Logger
+    "SqlDatasetLoggerConfig",
+    "log_dataset_version",
 ]
