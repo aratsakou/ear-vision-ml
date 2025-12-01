@@ -23,3 +23,21 @@ gcloud ai hp-tuning-jobs create \
   --config=configs/tuning/default.yaml \
   ...
 ```
+
+## Local Tuning (Optuna)
+You can run hyperparameter optimization locally using Optuna and Gaussian Processes.
+
+### Usage
+Run the `tune_locally.py` script:
+```bash
+python scripts/tune_locally.py +experiment=otoscopic_baseline
+```
+
+### Configuration
+The search space is currently defined in `scripts/tune_locally.py`. You can modify the `study_config` dictionary in that file to change the parameters being optimized.
+
+### Output
+- **Logs**: Progress is printed to the console.
+- **Artifacts**: Each trial creates a separate artifact directory (e.g., `artifacts/run_name_trial_0`).
+- **Database**: Tuning state is saved to `tuning.db` (SQLite).
+

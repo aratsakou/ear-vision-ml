@@ -39,6 +39,12 @@ def register_core_services(cfg: Any):
     from src.core.export.exporter import StandardExporter
     container.register_factory(Exporter, lambda: StandardExporter())
 
+    # Register Tuner
+    from src.core.tuning.hyperparam_tuner import HyperparameterTuner
+    from src.core.tuning.optuna_tuner import OptunaTuner
+    # We can default to OptunaTuner for local
+    container.register_factory(HyperparameterTuner, lambda: OptunaTuner())
+
 def register_task_services(cfg: Any):
     """
     Register task-specific services.
