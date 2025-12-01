@@ -1,0 +1,7 @@
+# Segmentation Explainability
+uncertainty:
+  enabled: true
+  method: "entropy"  # entropy | variance
+boundary_analysis:
+  enabled: true
+  min_island_size: 10  # Pixels

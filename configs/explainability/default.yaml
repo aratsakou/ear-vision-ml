@@ -1,0 +1,8 @@
+# Default Explainability Configuration
+enabled: false
+output_dir: "${run.artifacts_dir}/explainability"
+seed: 42
+
+# Global limits
+max_samples: 10  # Max samples to explain per run
+save_overlays: true

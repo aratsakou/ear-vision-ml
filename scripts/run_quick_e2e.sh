@@ -32,11 +32,13 @@ python -m src.tasks.classification.entrypoint \
   model=cls_mobilenetv3 \
   data=local \
   data.dataset.mode=manifest \
-  data.dataset.manifest_path=$DATA_DIR/classification/manifest.json \
+  data.dataset.manifest_path=$DATA_DIR/classification \
   training.epochs=1 \
   training.batch_size=4 \
   run.artifacts_dir=$TEST_DIR/cls_teacher \
-  run.log_vertex_experiments=false
+  run.log_vertex_experiments=false \
+  explainability.enabled=true \
+  explainability.max_samples=2
 
 # Step 3: Train Student Model with Distillation
 echo ""
@@ -45,9 +47,9 @@ python -m src.tasks.classification.entrypoint \
   model=cls_mobilenetv3 \
   data=local \
   data.dataset.mode=manifest \
-  data.dataset.manifest_path=$DATA_DIR/classification/manifest.json \
+  data.dataset.manifest_path=$DATA_DIR/classification \
   +training.distillation.enabled=true \
-  +training.distillation.teacher_model_path=$TEST_DIR/cls_teacher/saved_model \
+  +training.distillation.teacher_model_path=$TEST_DIR/cls_teacher/checkpoints/best_model.keras \
   +training.distillation.alpha=0.3 \
   +training.distillation.temperature=3.0 \
   training.epochs=1 \
@@ -59,10 +61,12 @@ python -m src.tasks.classification.entrypoint \
 echo ""
 echo "Step 4: Training Segmentation Model (1 epoch)..."
 python -m src.tasks.segmentation.entrypoint \
+  task=segmentation \
   model=seg_unet \
+  model.num_classes=3 \
   data=local \
   data.dataset.mode=manifest \
-  data.dataset.manifest_path=$DATA_DIR/segmentation/manifest.json \
+  data.dataset.manifest_path=$DATA_DIR/segmentation \
   training.epochs=1 \
   training.batch_size=2 \
   run.artifacts_dir=$TEST_DIR/seg_model \

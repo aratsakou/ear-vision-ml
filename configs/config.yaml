@@ -7,6 +7,11 @@ defaults:
   - export: tflite
   - evaluation: default
   - ensemble: cloud_soft_voting
+  - explainability: default
+  - explainability/classification: classification
+  - explainability/segmentation: segmentation
+  - explainability/roi: roi
+  - explainability/dataset_audit: dataset_audit
   - _self_
 
 run:

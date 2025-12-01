@@ -1,0 +1,8 @@
+# Dataset Audit Configuration
+class_distribution:
+  enabled: true
+leakage_check:
+  enabled: true
+  match_on: "image_uri"  # image_uri | hash
+label_consistency:
+  enabled: true

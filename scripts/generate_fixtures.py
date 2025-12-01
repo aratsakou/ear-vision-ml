@@ -48,13 +48,22 @@ def create_manifest(base_dir: Path, dataset_id: str):
     manifest = {
         "dataset_id": dataset_id,
         "task_name": "classification",
-        "dataset_version": "1.0.0",
-        "status": "ready",
-        "ontology_version": "1.0.0",
-        "task_mapping_version": "1.0.0",
-        "preprocess_pipeline_id": "full_frame_v1",
-        "preprocess_pipeline_version": "1.0.0",
-        "parquet_paths": {
+        "version": "1.0.0",
+        "status": "active",
+        "label_mapping_versions": {
+            "ontology": "1.0.0",
+            "task_mapping": "1.0.0",
+            "labelbox_mappings": []
+        },
+        "sampling_config": {
+            "hash": "dummy_hash",
+            "parameters": {}
+        },
+        "preprocess_pipeline": {
+            "id": "full_frame_v1",
+            "version": "1.0.0"
+        },
+        "splits": {
             "train": ["data/train-0000.parquet"],
             "val": ["data/val-0000.parquet"],
             "test": ["data/test-0000.parquet"]

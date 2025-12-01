@@ -1,0 +1,8 @@
+# ROI Audit Configuration
+validity_check:
+  enabled: true
+  min_area_ratio: 0.01
+  min_confidence: 0.5
+jitter_check:
+  enabled: true
+  max_center_variance: 10.0  # Pixels

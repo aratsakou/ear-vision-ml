@@ -39,7 +39,7 @@ class StandardTrainer(Trainer):
             teacher_model = tf.keras.models.load_model(teacher_path)
             
             # Wrap student in Distiller
-            model = Distiller(student=model, teacher=teacher_model, cfg=cfg)
+            model = Distiller(student=model, teacher=teacher_model, cfg=cfg, student_loss_fn=loss if not isinstance(loss, str) else tf.keras.losses.get(loss))
             
             # Compile Distiller
             # Note: Distiller.compile takes student_loss_fn, not loss
@@ -74,4 +74,27 @@ class StandardTrainer(Trainer):
             callbacks.append(tf.keras.callbacks.LambdaCallback(on_epoch_end=report_tuning_metrics))
 
         result = fit_model(model, cfg, train_ds, val_ds, callbacks)
+        
+        # Explainability Integration
+        if cfg.get("explainability", {}).get("enabled", False):
+            try:
+                from src.core.explainability.registry import run_explainability
+                print("\nRunning Explainability Framework...")
+                
+                run_ctx = {
+                    "run_id": cfg.run.name,
+                    "artifacts_dir": cfg.run.artifacts_dir
+                }
+                
+                datasets = {
+                    "train": train_ds,
+                    "val": val_ds
+                }
+                
+                run_explainability(cfg, run_ctx, model, datasets)
+            except Exception as e:
+                print(f"Explainability failed: {e}")
+                import traceback
+                traceback.print_exc()
+
         return result

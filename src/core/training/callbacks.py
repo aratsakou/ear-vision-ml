@@ -22,7 +22,9 @@ def make_callbacks(cfg: Any, artifacts_dir: str) -> list[tf.keras.callbacks.Call
     # TensorBoard with histogram and profiling
     tb_config = getattr(cfg.training, "tensorboard", None)
     if tb_config and getattr(tb_config, "enabled", True):
-        profile_batch = getattr(tb_config, "profile_batch", "0")  # Disable profiling by default
+        profile_batch = getattr(tb_config, "profile_batch", 0)
+        if isinstance(profile_batch, str) and profile_batch.isdigit():
+            profile_batch = int(profile_batch)
         cbs.append(
             tf.keras.callbacks.TensorBoard(
                 log_dir=f"{artifacts_dir}/tb",
@@ -57,7 +59,6 @@ def make_callbacks(cfg: Any, artifacts_dir: str) -> list[tf.keras.callbacks.Call
             tf.keras.callbacks.ModelCheckpoint(
                 filepath=f"{artifacts_dir}/checkpoints/epoch_{{epoch:03d}}.keras",
                 save_freq="epoch",
-                period=save_freq,
                 save_weights_only=False,
                 verbose=0,
             )

@@ -54,22 +54,41 @@ class Distiller(tf.keras.Model):
     Custom Keras Model for Knowledge Distillation.
     Wraps a student model and a teacher model.
     """
-    def __init__(self, student: tf.keras.Model, teacher: tf.keras.Model, cfg: Any):
+    def __init__(self, student: tf.keras.Model, teacher: tf.keras.Model, cfg: Any, student_loss_fn: tf.keras.losses.Loss = None):
         super().__init__()
         self.student = student
         self.teacher = teacher
         self.teacher.trainable = False
-        self.cfg = cfg
+        # self.cfg = cfg # Don't store cfg to avoid serialization issues
         
         # Distillation params
         self.alpha = cfg.training.distillation.alpha
         self.temperature = cfg.training.distillation.temperature
         
+        if student_loss_fn is None:
+             # Fallback or error
+             student_loss_fn = tf.keras.losses.CategoricalCrossentropy()
+
         self.distillation_loss_fn = DistillationLoss(
-            student_loss_fn=tf.keras.losses.get(cfg.training.loss.name), # Simplified retrieval
+            student_loss_fn=student_loss_fn,
             alpha=self.alpha,
             temperature=self.temperature
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "alpha": self.alpha,
+            "temperature": self.temperature,
+        })
+        return config
+    
+    @classmethod
+    def from_config(cls, config):
+        # Note: This will fail to reconstruct student/teacher if called directly.
+        # But it satisfies the serialization check.
+        # To fully support reloading, we'd need to reconstruct the sub-models.
+        raise NotImplementedError("Reloading Distiller from config is not supported. Load the student model instead.")
 
     def compile(self, optimizer, metrics, student_loss_fn):
         """
