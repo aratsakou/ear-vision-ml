@@ -65,10 +65,15 @@ class CoreMLExporter:
                      # Fallback to numeric labels if names not available
                      classifier_config = ct.ClassifierConfig([str(i) for i in range(int(cfg.model.num_classes))])
 
+            # Save model to temp dir first to ensure clean conversion
+            temp_model_path = output_dir / "temp_model.h5"
+            model.save(temp_model_path)
+            
             mlmodel = ct.convert(
-                model,
+                str(temp_model_path),
                 inputs=[image_input],
                 classifier_config=classifier_config,
+                source="tensorflow",
                 convert_to="mlprogram", # Use modern ML Program format
                 compute_precision=ct.precision.FLOAT16 if cfg.export.export.coreml.get("quantize", False) else ct.precision.FLOAT32
             )

@@ -1,4 +1,0 @@
-ensemble:
-  type: "cloud_soft_voting"
-  members: []
-  # Empty by default; can be used later to load multiple SavedModels.

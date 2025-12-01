@@ -6,8 +6,10 @@ import tensorflow as tf
 import json
 
 from src.core.explainability.registry import run_explainability
-from src.core.models.factories.model_factory import build_model
 from src.core.data.dataset_loader import DataLoaderFactory
+from src.core.registry import register_core_services
+from src.core.di import get_container
+from src.core.interfaces import ModelBuilder
 
 log = logging.getLogger(__name__)
 
@@ -23,8 +25,13 @@ def main(cfg: DictConfig) -> None:
     # Check if we should load weights
     weights_path = cfg.get("weights_path")
     
+    # Register services
+    register_core_services(cfg)
+    container = get_container()
+
     log.info(f"Building model: {cfg.model.name}")
-    model = build_model(cfg)
+    model_builder = container.resolve(ModelBuilder)
+    model = model_builder.build(cfg)
     
     if weights_path and Path(weights_path).exists():
         log.info(f"Loading weights from {weights_path}")

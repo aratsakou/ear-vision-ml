@@ -1,89 +1,17 @@
-# Contributing to ear-vision-ml
+# Repository rules
 
-Welcome to the team! We follow a strict but efficient workflow designed to maintain production quality at all times.
+## Non-negotiables
+- No training code may hardcode dataset paths. Use the data config (manifest) and contracts.
+- Preprocessing pipelines are swappable via config and must adhere to ROI contract.
+- Datasets are immutable once marked active. Changes create new versions.
+- Core modules (`src/core/*` and contracts) require review and must maintain backward compatibility.
 
-## 🚀 Quick Start for New Engineers
+## Contributing
+- Add new models via `src/core/models/factories/model_factory.py` + a new `configs/model/*.yaml`.
+- Add new preprocessing pipelines under `src/core/preprocess/pipelines/` and register in `registry.py`.
+- Add/modify contracts only with accompanying tests and an ADR entry.
 
-1.  **Read the Rules**: Start by reading [docs/repo_rules.md](docs/repo_rules.md). These are non-negotiable.
-2.  **Setup Environment**:
-    ```bash
-    conda env create -f config/env/conda-tf217.yml
-    conda activate ear-vision-ml
-    pip install -e .
-    ```
-3.  **Run Tests**: Ensure everything works locally.
-    ```bash
-    pytest -n auto
-    ```
-
-## 🛠 Development Workflow
-
-### 1. Create a Branch
-Always work on a feature branch.
-```bash
-git checkout -b feature/my-new-feature
-```
-
-### 2. Test-Driven Development (TDD)
-We strictly follow TDD.
-1.  **Write a failing test** in `tests/`.
-2.  **Run the test** to confirm it fails.
-3.  **Implement the feature** to make the test pass.
-4.  **Refactor** if necessary.
-
-### 3. Documentation-Driven Development
-Every meaningful change requires documentation.
-1.  **ADRs**: For architectural decisions, create an entry in `docs/adr/`. Use `docs/adr/0000-template.md`.
-2.  **Docstrings**: All public functions and classes must have Google-style docstrings.
-
-### 4. Code Quality
-Before committing, ensure your code meets our quality standards:
-```bash
-# Linting
-ruff check .
-
-# Formatting
-ruff format .
-
-# Type Checking
-mypy src/core/
-```
-
-### 5. Submit a Pull Request
--   Ensure all tests pass (`pytest`).
--   Describe the changes and the "why".
-
-## 🏗 Architecture Guidelines
-
--   **Dependency Injection**: Use `src/core/di.py` for service management.
--   **Registry Pattern**: Register new models and pipelines in their respective registries.
--   **Config First**: Use Hydra configs (`configs/`) for all parameters. Avoid hardcoding.
--   **Contracts**: Adhere to `src/core/contracts/`. Changes here require an ADR.
-
-## 📚 Useful Resources
-
--   [Repository Rules](docs/repo_rules.md)
--   [Architecture Overview](ARCHITECTURE_REFACTORING.md)
--   [AI Context (AI_CONTEXT.md)](AI_CONTEXT.md) - Context for AI assistants.
-
-## ✅ Pull Request Checklist
-
-Before submitting your PR, ensure:
-
-- [ ] All tests pass locally (`pytest -v`)
-- [ ] Code is linted (`ruff check .`)
-- [ ] Code is formatted (`ruff format .`)
-- [ ] Type checking passes (`mypy src/core/`)
-- [ ] New features have tests (maintain 100% pass rate)
-- [ ] Documentation updated
-- [ ] No hardcoded paths or magic numbers
-- [ ] Config changes documented
-- [ ] Breaking changes noted in ADR
-
-## 🧪 Testing Standards
-
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test end-to-end workflows
-- **No Network Calls**: All tests must run offline
-- **Fixtures**: Use `scripts/generate_fixtures.py` for test data
-- **Coverage**: Aim for comprehensive behavioral coverage, not just line coverage
+## Documentation-driven development
+Every implementation step must update:
+- a devlog entry under `docs/devlog/`
+- and, where applicable, an ADR entry under `docs/adr/`

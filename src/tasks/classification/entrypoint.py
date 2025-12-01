@@ -5,8 +5,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from src.core.di import get_container
 from src.core.registry import register_core_services
-from src.core.interfaces import Trainer, DataLoader
-from src.core.models.factories.model_factory import build_model
+from src.core.interfaces import Trainer, DataLoader, ModelBuilder
 
 log = logging.getLogger(__name__)
 
@@ -27,8 +26,8 @@ def main(cfg: DictConfig) -> None:
     val_ds = data_loader.load_val(cfg)
     
     # Build model
-    # ModelFactory could also be moved to DI, but for now we keep it as is
-    model = build_model(cfg)
+    model_builder = container.resolve(ModelBuilder)
+    model = model_builder.build(cfg)
     
     history = trainer.train(model, train_ds, val_ds, cfg)
     

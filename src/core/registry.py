@@ -27,6 +27,12 @@ def register_core_services(cfg: Any):
         
     container.register_factory(Trainer, create_trainer)
     container.register_singleton(TrainingComponentFactory, TrainingComponentFactory())
+    
+    # Register ModelBuilder
+    # We use the global _builder instance from model_factory which contains registered models
+    from src.core.models.factories.model_factory import _builder
+    from src.core.interfaces import ModelBuilder
+    container.register_singleton(ModelBuilder, _builder)
 
 def register_task_services(cfg: Any):
     """

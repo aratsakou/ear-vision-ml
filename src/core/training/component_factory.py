@@ -15,7 +15,14 @@ class TrainingComponentFactory:
         task_name = str(cfg.task.name).lower()
         
         # Check for explicit loss configuration
-        loss_type = cfg.get("training", {}).get("loss", {}).get("type", None)
+        training_cfg = cfg.get("training", {})
+        loss_cfg = training_cfg.get("loss", None)
+        
+        loss_type = None
+        if isinstance(loss_cfg, dict):
+            loss_type = loss_cfg.get("type", None)
+        elif isinstance(loss_cfg, str):
+            loss_type = loss_cfg
         
         if loss_type == "focal":
             from src.core.training.losses import focal_loss

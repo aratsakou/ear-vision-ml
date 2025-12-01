@@ -6,7 +6,6 @@ defaults:
   - training: default
   - export: tflite
   - evaluation: default
-  - ensemble: cloud_soft_voting
   - explainability: default
   - explainability/classification: classification
   - explainability/segmentation: segmentation

@@ -29,6 +29,9 @@ def register_model(name: str):
         return fn
     return decorator
 
+# Backward compatibility
+build_model = _builder.build
+
 
 
 # --- Implementations ---

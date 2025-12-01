@@ -2,7 +2,7 @@
 Unit tests for Dependency Injection container and interfaces.
 """
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, NonCallableMock
 import tensorflow as tf
 
 from src.core.di import Container, get_container
@@ -17,7 +17,7 @@ class TestDIContainer:
         container = Container()
         
         # Create a mock service
-        mock_builder = Mock(spec=ModelBuilder)
+        mock_builder = NonCallableMock(spec=ModelBuilder)
         
         # Register singleton
         container.register_singleton(ModelBuilder, mock_builder)
@@ -63,9 +63,9 @@ class TestDIContainer:
         """Test registering multiple different service types."""
         container = Container()
         
-        mock_builder = Mock(spec=ModelBuilder)
-        mock_trainer = Mock(spec=Trainer)
-        mock_exporter = Mock(spec=Exporter)
+        mock_builder = NonCallableMock(spec=ModelBuilder)
+        mock_trainer = NonCallableMock(spec=Trainer)
+        mock_exporter = NonCallableMock(spec=Exporter)
         
         container.register_singleton(ModelBuilder, mock_builder)
         container.register_singleton(Trainer, mock_trainer)

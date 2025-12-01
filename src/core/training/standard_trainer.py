@@ -50,10 +50,14 @@ class StandardTrainer(Trainer, Component):
                 metrics=metrics
             )
         
+        # Ensure artifacts directory exists
+        import os
+        os.makedirs(cfg.run.artifacts_dir, exist_ok=True)
+        
         callbacks = self.component_factory.create_callbacks(cfg, str(cfg.run.artifacts_dir))
         
         # Add Hyperparameter Tuning Callback if enabled
-        if cfg.get("tuning", {}).get("enabled", False):
+        if cfg.training.get("tuning", {}).get("enabled", False):
             from src.core.tuning.vertex_vizier import VertexVizierTuner
             tuner = VertexVizierTuner(project=cfg.get("project", "local"), location=cfg.get("location", "local"))
             
@@ -67,7 +71,8 @@ class StandardTrainer(Trainer, Component):
         result = fit_model(model, cfg, train_ds, val_ds, callbacks)
         
         # Explainability Integration
-        if cfg.get("explainability", {}).get("enabled", False):
+        explain_cfg = cfg.get("explainability", {})
+        if explain_cfg.get("enabled", False):
             try:
                 from src.core.explainability.registry import run_explainability
                 print("\nRunning Explainability Framework...")

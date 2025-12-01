@@ -13,13 +13,17 @@ def test_cli_smoke(tmp_path):
         "explainability": {"enabled": False} # Disable to avoid complex mocking
     })
     
-    with patch("src.core.explainability.cli.build_model") as mock_build_model, \
+    with patch("src.core.explainability.cli.get_container") as mock_get_container, \
          patch("src.core.explainability.cli.DataLoaderFactory") as mock_loader_factory, \
          patch("src.core.explainability.cli.run_explainability") as mock_run:
              
-        # Mock model
+        # Mock container and model builder
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_builder = MagicMock()
+        mock_container.resolve.return_value = mock_builder
         mock_model = MagicMock()
-        mock_build_model.return_value = mock_model
+        mock_builder.build.return_value = mock_model
         
         # Mock datasets
         mock_loader = MagicMock()
