@@ -23,6 +23,12 @@ import numpy as np
 import tensorflow as tf
 
 from src.core.interfaces import Exporter, Component
+from src.core.constants import (
+    QUANTIZATION_CALIBRATION_SAMPLES,
+    BENCHMARK_WARMUP_RUNS,
+    BENCHMARK_MEASUREMENT_RUNS,
+    GIT_COMMAND_TIMEOUT,
+)
 from src.core.export.coreml_exporter import CoreMLExporter
 
 log = logging.getLogger(__name__)
@@ -41,16 +47,27 @@ class ExportPaths:
 
 
 def _get_git_commit() -> str:
-    """Get current git commit hash."""
+    """Get current git commit hash with availability check."""
+    import shutil
+    
+    # Check if git is available
+    if not shutil.which("git"):
+        log.debug("Git not found in PATH")
+        return "unknown"
+    
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=GIT_COMMAND_TIMEOUT,
         )
         if result.returncode == 0:
             return result.stdout.strip()
+        else:
+            log.warning(f"Git command failed with code {result.returncode}")
+    except subprocess.TimeoutExpired:
+        log.warning("Git command timed out")
     except Exception as e:
         log.warning(f"Failed to get git commit: {e}")
     return "unknown"
@@ -97,7 +114,7 @@ def _write_model_manifest(
     return p
 
 
-def _create_representative_dataset(input_shape: tuple[int, ...], num_samples: int = 100):
+def _create_representative_dataset(input_shape: tuple[int, ...], num_samples: int = QUANTIZATION_CALIBRATION_SAMPLES):
     """Create representative dataset for quantization calibration."""
     def representative_data_gen():
         for _ in range(num_samples):
@@ -178,7 +195,7 @@ def _export_tflite_variants(
 def _benchmark_tflite_models(
     tflite_paths: dict[str, Path | None],
     input_shape: tuple[int, ...],
-    num_runs: int = 100,
+    num_runs: int = BENCHMARK_MEASUREMENT_RUNS,
 ) -> dict[str, Any]:
     """
     Benchmark TFLite models for latency and size.
@@ -209,7 +226,7 @@ def _benchmark_tflite_models(
             # Scale to uint8 range
             dummy_input = (dummy_input * 255).astype(np.uint8)
         
-        for _ in range(10):
+        for _ in range(BENCHMARK_WARMUP_RUNS):
             interpreter.set_tensor(input_details['index'], dummy_input)
             interpreter.invoke()
         

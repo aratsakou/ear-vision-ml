@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import Literal
 import math
 
+from src.core.constants import ROI_BBOX_EPSILON
+
 
 @dataclass(frozen=True)
 class RoiBBox:
@@ -41,10 +43,9 @@ class RoiBBox:
              raise ValueError(f"Invalid coordinate order: x1={x1} > x2={x2} or y1={y1} > y2={y2}")
         
         # Validate non-empty bbox (with small epsilon for floating point comparison)
-        EPSILON = 1e-6
         width = x2 - x1
         height = y2 - y1
-        if width < EPSILON or height < EPSILON:
+        if width < ROI_BBOX_EPSILON or height < ROI_BBOX_EPSILON:
             raise ValueError(f"Bounding box is empty or degenerate: width={width:.6f}, height={height:.6f}")
 
         # Validate confidence

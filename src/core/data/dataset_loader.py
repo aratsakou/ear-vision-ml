@@ -14,6 +14,7 @@ from src.core.contracts.roi_contract import RoiBBox
 from src.core.data.augmenter import Augmenter, NoOpAugmenter, ConfigurableAugmenter
 from src.core.interfaces import DataLoader
 from src.core.config_utils import safe_get, safe_get_str
+from src.core.constants import SHUFFLE_BUFFER_SIZE, OVERSAMPLE_CHUNK_SIZE
 
 
 log = logging.getLogger(__name__)
@@ -32,6 +33,20 @@ def load_manifest(manifest_path: Path) -> dict[str, Any]:
         
     jsonschema.validate(instance=manifest, schema=schema)
     return manifest
+
+
+def _schema_type_to_tf(schema_type: str) -> tf.DType:
+    """Convert schema type string to TensorFlow dtype."""
+    type_map = {
+        "string": tf.string,
+        "object": tf.string,
+        "int64": tf.int64,
+        "int32": tf.int32,
+        "float32": tf.float32,
+        "float64": tf.float32,  # Downcast to float32 for efficiency
+    }
+    return type_map.get(schema_type.lower(), tf.string)
+
 
 def load_dataset_from_manifest_dir(
     manifest_dir: Path | str, 
@@ -67,26 +82,29 @@ def load_dataset_from_manifest_dir(
     full_paths = [str(manifest_dir / p) for p in parquet_files]
     
     def generator() -> Generator[dict[str, Any], None, None]:
-        # If oversampling, we need to load all data first
+        # If oversampling, use chunked processing to avoid OOM
         if sampling_strategy == "oversample" and split == "train":
             from src.core.data.sampling import oversample_dataframe
-            dfs = [pd.read_parquet(p) for p in full_paths]
-            full_df = pd.concat(dfs, ignore_index=True)
             
-            # Assume 'label' is the target column for now (classification)
-            # For segmentation, oversampling based on image-level label is still valid if available
-            target_col = "label" if "label" in full_df.columns else None
-            
-            if target_col:
-                log.info(f"Oversampling dataset based on '{target_col}'...")
-                full_df = oversample_dataframe(full_df, target_col)
-            
-            # Shuffle in memory if requested
-            if shuffle:
-                full_df = full_df.sample(frac=1).reset_index(drop=True)
+            target_col = None
+            # Process in chunks to avoid loading entire dataset into memory
+            for p_path in full_paths:
+                df_chunk = pd.read_parquet(p_path)
                 
-            for _, row in full_df.iterrows():
-                yield row.to_dict()
+                # Determine target column from first chunk
+                if target_col is None:
+                    target_col = "label" if "label" in df_chunk.columns else None
+                
+                if target_col:
+                    log.info(f"Oversampling chunk from {p_path} based on '{target_col}'...")
+                    df_chunk = oversample_dataframe(df_chunk, target_col)
+                
+                # Shuffle chunk if requested
+                if shuffle:
+                    df_chunk = df_chunk.sample(frac=1).reset_index(drop=True)
+                
+                for _, row in df_chunk.iterrows():
+                    yield row.to_dict()
         else:
             # Standard streaming load
             for p_path in full_paths:
@@ -94,20 +112,30 @@ def load_dataset_from_manifest_dir(
                 for _, row in df.iterrows():
                     yield row.to_dict()
 
-    # Determine output signature from the first file
-    first_df = pd.read_parquet(full_paths[0])
-    output_signature = {
-        k: tf.TensorSpec(shape=(), dtype=tf.string if v == 'object' else tf.int64 if v == 'int64' else tf.float32)
-        for k, v in first_df.dtypes.items()
-    }
+    # Cache schema from manifest if available, otherwise read from first file
+    schema = manifest.get("schema")
+    if schema:
+        # Use cached schema
+        output_signature = {
+            k: tf.TensorSpec(shape=(), dtype=_schema_type_to_tf(v))
+            for k, v in schema.items()
+        }
+    else:
+        # Fallback: read first file (only done once now)
+        first_df = pd.read_parquet(full_paths[0])
+        output_signature = {
+            k: tf.TensorSpec(shape=(), dtype=tf.string if v == 'object' else tf.int64 if v == 'int64' else tf.float32)
+            for k, v in first_df.dtypes.items()
+        }
     
     ds = tf.data.Dataset.from_generator(
         generator,
         output_signature=output_signature
     )
     
-    if shuffle and sampling_strategy != "oversample":
-        ds = ds.shuffle(buffer_size=1000)
+    # Apply shuffle with configurable buffer size
+    if shuffle:
+        ds = ds.shuffle(buffer_size=SHUFFLE_BUFFER_SIZE)
     
     ds = ds.batch(batch_size)
     return ds
