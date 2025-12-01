@@ -15,7 +15,7 @@ echo ""
 # Model 1: MobileNetV3 (Lightweight)
 echo "1. Training MobileNetV3 (Lightweight Baseline)..."
 python -m src.tasks.classification.entrypoint \
-  --config-name experiment/otoscopic_baseline \
+  +experiment=otoscopic_baseline \
   model=cls_mobilenetv3 \
   model.input_shape=[512,512,3] \
   run.name=otoscopic_mobilenetv3 \
@@ -28,7 +28,7 @@ echo ""
 # Model 2: EfficientNetB0 (Balanced)
 echo "2. Training EfficientNetB0 (Balanced)..."
 python -m src.tasks.classification.entrypoint \
-  --config-name experiment/otoscopic_baseline \
+  +experiment=otoscopic_baseline \
   model=cls_efficientnetb0 \
   model.input_shape=[512,512,3] \
   run.name=otoscopic_efficientnetb0 \
@@ -41,7 +41,7 @@ echo ""
 # Model 3: ResNet50V2 (High Capacity)
 echo "3. Training ResNet50V2 (High Capacity)..."
 python -m src.tasks.classification.entrypoint \
-  --config-name experiment/otoscopic_baseline \
+  +experiment=otoscopic_baseline \
   model=cls_resnet50v2 \
   model.input_shape=[512,512,3] \
   run.name=otoscopic_resnet50v2 \

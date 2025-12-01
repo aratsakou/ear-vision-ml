@@ -3,13 +3,15 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import jsonschema
 import pandas as pd
 import tensorflow as tf
 
 from src.core.interfaces import DataLoader
+from src.core.data.augmenter import Augmenter, NoOpAugmenter, ConfigurableAugmenter
+
 
 log = logging.getLogger(__name__)
 
@@ -129,9 +131,16 @@ class SegmentationPreprocessor(Preprocessor):
         
         return img, mask_one_hot
 
+# Imports are handled at the top of the file or locally to avoid circular deps if needed
+# But here we are at module level.
+# The previous tool call added the import before ManifestDataLoader definition.
+# We need to make sure we don't have duplicate imports or missing ones.
+# Let's just fix the previous import line.
+
 class ManifestDataLoader(DataLoader):
-    def __init__(self, preprocessor: Preprocessor):
+    def __init__(self, preprocessor: Preprocessor, augmenter: Optional[Augmenter] = None):
         self.preprocessor = preprocessor
+        self.augmenter = augmenter or NoOpAugmenter()
 
     def _load(self, cfg: Any, split: str) -> tf.data.Dataset:
         batch_size = int(cfg.data.dataset.batch_size)
@@ -142,10 +151,21 @@ class ManifestDataLoader(DataLoader):
             batch_size=batch_size,
         )
         
+        # Preprocess (unbatch first to process individual items)
         ds = ds_raw.unbatch().map(
             lambda x: self.preprocessor.preprocess(x, cfg),
             num_parallel_calls=tf.data.AUTOTUNE
-        ).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+        )
+        
+        # Apply augmentation if training
+        if split == "train":
+            ds = ds.map(
+                lambda x, y: self.augmenter.augment(x, y),
+                num_parallel_calls=tf.data.AUTOTUNE
+            )
+            
+        # Batch and prefetch
+        ds = ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
         return ds
 
     def load_train(self, cfg: Any) -> tf.data.Dataset:
@@ -183,14 +203,24 @@ class SyntheticDataLoader(DataLoader):
     def load_val(self, cfg: Any) -> tf.data.Dataset:
         return self._make_synthetic_tfdata(cfg)
 
+
+
 class DataLoaderFactory:
     @staticmethod
     def get_loader(cfg: Any) -> DataLoader:
         if cfg.data.dataset.mode == "manifest":
             task_name = str(cfg.task.name).lower()
+            augmenter = ConfigurableAugmenter(cfg)
+            
             if task_name == "segmentation":
-                return ManifestDataLoader(SegmentationPreprocessor())
+                return ManifestDataLoader(SegmentationPreprocessor(), augmenter)
             else:
-                return ManifestDataLoader(ClassificationPreprocessor())
+                # Check if medical preprocessing is requested
+                preprocess_type = cfg.get("preprocess", {}).get("type", "standard")
+                if preprocess_type == "medical":
+                    from src.core.data.medical_preprocessing import MedicalPreprocessor
+                    return ManifestDataLoader(MedicalPreprocessor(), augmenter)
+                else:
+                    return ManifestDataLoader(ClassificationPreprocessor(), augmenter)
         else:
             return SyntheticDataLoader()

@@ -1,34 +1,23 @@
-from typing import Any
+from typing import Any, Optional
 
 import tensorflow as tf
 
 from src.core.interfaces import Trainer
-from src.core.training.callbacks import make_callbacks
-from src.core.training.losses import classification_loss, cropper_loss, segmentation_loss
-from src.core.training.metrics import classification_metrics, segmentation_metrics
-from src.core.training.trainer_base import fit_model, make_optimizer
-
-
+from src.core.training.component_factory import TrainingComponentFactory
 from src.core.training.distillation import Distiller
+from src.core.di import get_container
 
 class StandardTrainer(Trainer):
-    def train(self, model: tf.keras.Model, train_ds: tf.data.Dataset, val_ds: tf.data.Dataset, cfg: Any) -> Any:
-        task_name = str(cfg.task.name).lower()
-        
-        if task_name == "classification":
-            loss = classification_loss()
-            metrics = classification_metrics()
-        elif task_name == "segmentation":
-            loss = segmentation_loss()
-            metrics = segmentation_metrics()
-        elif task_name == "cropper":
-            loss = cropper_loss()
-            metrics = [] # Cropper usually just minimizes loss, or we can add IoU metric if available
-        else:
-            # Default or fallback
-            loss = "mse"
-            metrics = ["accuracy"]
+    def __init__(self, component_factory: Optional[TrainingComponentFactory] = None):
+        self.component_factory = component_factory or TrainingComponentFactory()
 
+    def train(self, model: tf.keras.Model, train_ds: tf.data.Dataset, val_ds: tf.data.Dataset, cfg: Any) -> Any:
+        from src.core.training.trainer_base import fit_model # Keep this import to avoid circular dep if any, or move it
+        
+        loss = self.component_factory.create_loss(cfg)
+        metrics = self.component_factory.create_metrics(cfg)
+        optimizer = self.component_factory.create_optimizer(cfg)
+        
         # Distillation support
         if cfg.training.get("distillation", {}).get("enabled", False):
             teacher_path = cfg.training.distillation.teacher_model_path
@@ -39,34 +28,31 @@ class StandardTrainer(Trainer):
             teacher_model = tf.keras.models.load_model(teacher_path)
             
             # Wrap student in Distiller
-            model = Distiller(student=model, teacher=teacher_model, cfg=cfg, student_loss_fn=loss if not isinstance(loss, str) else tf.keras.losses.get(loss))
+            # Distiller needs the student loss function
+            student_loss_fn = loss if not isinstance(loss, str) else tf.keras.losses.get(loss)
+            model = Distiller(student=model, teacher=teacher_model, cfg=cfg, student_loss_fn=student_loss_fn)
             
             # Compile Distiller
-            # Note: Distiller.compile takes student_loss_fn, not loss
             model.compile(
-                optimizer=make_optimizer(cfg),
+                optimizer=optimizer,
                 metrics=metrics,
-                student_loss_fn=loss if not isinstance(loss, str) else tf.keras.losses.get(loss)
+                student_loss_fn=student_loss_fn
             )
         else:
             model.compile(
-                optimizer=make_optimizer(cfg), 
+                optimizer=optimizer, 
                 loss=loss, 
                 metrics=metrics
             )
         
-        callbacks = make_callbacks(cfg, str(cfg.run.artifacts_dir))
+        callbacks = self.component_factory.create_callbacks(cfg, str(cfg.run.artifacts_dir))
         
         # Add Hyperparameter Tuning Callback if enabled
-        # This is a simplified integration. In a real scenario, we might use a dedicated callback class.
         if cfg.get("tuning", {}).get("enabled", False):
             from src.core.tuning.vertex_vizier import VertexVizierTuner
-            # We use a simple LambdaCallback for MVP to report metrics
-            # In production, use a robust callback that handles frequency and metric selection
             tuner = VertexVizierTuner(project=cfg.get("project", "local"), location=cfg.get("location", "local"))
             
             def report_tuning_metrics(epoch, logs):
-                # Report validation accuracy or loss
                 metric_name = "val_accuracy" if "val_accuracy" in logs else "val_loss"
                 if metric_name in logs:
                      tuner.report_metrics("current_trial", {metric_name: logs[metric_name]}, step=epoch)

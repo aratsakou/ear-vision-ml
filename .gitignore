@@ -64,3 +64,4 @@ wandb/
 *.tflite
 *.mlpackage
 *.pb
+tmp/

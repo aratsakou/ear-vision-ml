@@ -67,3 +67,25 @@ mypy src/core/
 -   [Repository Rules](docs/repo_rules.md)
 -   [Architecture Overview](ARCHITECTURE_REFACTORING.md)
 -   [Developer Cheat Sheet (CLAUDE.md)](CLAUDE.md) - Contains useful commands.
+
+## ✅ Pull Request Checklist
+
+Before submitting your PR, ensure:
+
+- [ ] All tests pass locally (`pytest -v`)
+- [ ] Code is linted (`ruff check .`)
+- [ ] Code is formatted (`ruff format .`)
+- [ ] Type checking passes (`mypy src/core/`)
+- [ ] New features have tests (maintain 100% pass rate)
+- [ ] Documentation updated (devlog entry required)
+- [ ] No hardcoded paths or magic numbers
+- [ ] Config changes documented
+- [ ] Breaking changes noted in ADR
+
+## 🧪 Testing Standards
+
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test end-to-end workflows
+- **No Network Calls**: All tests must run offline
+- **Fixtures**: Use `scripts/generate_fixtures.py` for test data
+- **Coverage**: Aim for comprehensive behavioral coverage, not just line coverage

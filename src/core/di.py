@@ -1,32 +1,40 @@
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Type, Dict, Optional
 
 T = TypeVar("T")
 
 class Container:
+    """
+    Dependency Injection Container.
+    Supports singleton and transient (factory) lifecycles.
+    """
     def __init__(self):
-        self._services: dict[type, Any] = {}
-        self._factories: dict[type, Callable[[], Any]] = {}
+        self._services: Dict[Type[T], Any] = {}
+        self._factories: Dict[Type[T], Callable[..., T]] = {}
 
-    def register_singleton(self, interface: type[T], instance: T):
+    def register_singleton(self, interface: Type[T], instance: T):
+        """Register a pre-instantiated object as a singleton."""
         self._services[interface] = instance
 
-    def register_factory(self, interface: type[T], factory: Callable[[], T]):
+    def register_factory(self, interface: Type[T], factory: Callable[..., T]):
+        """Register a factory function that creates a new instance each time."""
         self._factories[interface] = factory
 
-    def resolve(self, interface: type[T]) -> T:
+    def resolve(self, interface: Type[T], **kwargs) -> T:
+        """
+        Resolve a service instance.
+        If registered as singleton, returns the cached instance.
+        If registered as factory, calls the factory with optional kwargs.
+        """
         if interface in self._services:
             return self._services[interface]
         
         if interface in self._factories:
-            instance = self._factories[interface]()
-            # Optionally cache if we wanted lazy singletons, but for now let's keep it simple
-            # self._services[interface] = instance 
-            return instance
+            return self._factories[interface](**kwargs)
             
         raise ValueError(f"Service {interface} not registered")
 
-# Global container instance for simplicity, though passing it around is cleaner
+# Global container instance
 _container = Container()
 
 def get_container() -> Container:

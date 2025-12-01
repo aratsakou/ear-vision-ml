@@ -1,0 +1,66 @@
+{
+  "dataset_id": "otoscopic_classification",
+  "task_name": "classification",
+  "version": "1.0.0",
+  "status": "active",
+  "label_mapping_versions": {
+    "ontology": "1.0.0",
+    "task_mapping": "1.0.0",
+    "labelbox_mappings": []
+  },
+  "sampling_config": {
+    "hash": "otoscopic_stratified_split",
+    "parameters": {
+      "train_ratio": 0.8,
+      "val_ratio": 0.1,
+      "test_ratio": 0.1,
+      "random_state": 42
+    }
+  },
+  "preprocess_pipeline": {
+    "id": "full_frame_v1",
+    "version": "1.0.0"
+  },
+  "splits": {
+    "train": [
+      "data/train-0000.parquet",
+      "data/train-0001.parquet",
+      "data/train-0002.parquet",
+      "data/train-0003.parquet",
+      "data/train-0004.parquet"
+    ],
+    "val": [
+      "data/val-0000.parquet"
+    ],
+    "test": [
+      "data/test-0000.parquet"
+    ]
+  },
+  "created_by": "build_otoscopic_dataset",
+  "created_at": "2025-12-01T07:52:33.008411+00:00",
+  "metadata": {
+    "num_classes": 5,
+    "class_mapping": {
+      "Acute Otitis Media": 0,
+      "Cerumen Impaction": 1,
+      "Chronic Otitis Media": 2,
+      "Myringosclerosis": 3,
+      "Normal": 4
+    },
+    "class_descriptions": {
+      "Acute Otitis Media": "Bacterial or viral infection causing inflammation and fluid buildup behind the eardrum",
+      "Cerumen Impaction": "Excessive earwax buildup blocking the ear canal",
+      "Chronic Otitis Media": "Persistent ear infection leading to long-term damage",
+      "Myringosclerosis": "Formation of calcified plaques on the tympanic membrane",
+      "Normal": "Healthy ear with no signs of infection or abnormalities"
+    },
+    "total_images": 3000,
+    "class_counts": {
+      "Acute Otitis Media": 600,
+      "Cerumen Impaction": 600,
+      "Chronic Otitis Media": 600,
+      "Myringosclerosis": 600,
+      "Normal": 600
+    }
+  }
+}

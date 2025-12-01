@@ -3,30 +3,33 @@ import tensorflow as tf
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
-from src.core.training.standard_trainer import StandardTrainer
+from src.core.di import get_container
+from src.core.registry import register_core_services
+from src.core.interfaces import Trainer, DataLoader
 from src.core.models.factories.model_factory import build_model
-from src.core.data.dataset_loader import DataLoaderFactory
 
 log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../../../configs", config_name="config")
 def main(cfg: DictConfig) -> None:
-    log.info("Classification Task Entrypoint")
-    log.info(f"Resolved Configuration:\n{OmegaConf.to_yaml(cfg)}")
+    print(OmegaConf.to_yaml(cfg))
     
-    # 1. Build Model
-    log.info(f"Building model: {cfg.model.name}")
+    # Register services
+    register_core_services(cfg)
+    container = get_container()
+    
+    # Resolve dependencies
+    data_loader = container.resolve(DataLoader)
+    trainer = container.resolve(Trainer)
+    
+    # Load data
+    train_ds = data_loader.load_train(cfg)
+    val_ds = data_loader.load_val(cfg)
+    
+    # Build model
+    # ModelFactory could also be moved to DI, but for now we keep it as is
     model = build_model(cfg)
     
-    # 2. Load Data
-    log.info("Loading datasets...")
-    loader = DataLoaderFactory.get_loader(cfg)
-    train_ds = loader.load_train(cfg)
-    val_ds = loader.load_val(cfg)
-    
-    # 3. Train
-    log.info("Starting training...")
-    trainer = StandardTrainer()
     history = trainer.train(model, train_ds, val_ds, cfg)
     
     # 4. Export (Optional - handled by callbacks usually, but we can do explicit export if needed)

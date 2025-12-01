@@ -47,7 +47,7 @@ class TestStandardTrainer:
             }
         })
         
-        with patch('src.core.training.standard_trainer.make_callbacks', return_value=[]):
+        with patch('src.core.training.component_factory.TrainingComponentFactory.create_callbacks', return_value=[]):
             result = trainer.train(model, ds, ds, cfg)
         
         # Check that model was compiled
@@ -85,7 +85,7 @@ class TestStandardTrainer:
             }
         })
         
-        with patch('src.core.training.standard_trainer.make_callbacks', return_value=[]):
+        with patch('src.core.training.component_factory.TrainingComponentFactory.create_callbacks', return_value=[]):
             result = trainer.train(model, ds, ds, cfg)
         
         assert model.optimizer is not None
@@ -119,7 +119,7 @@ class TestStandardTrainer:
             }
         })
         
-        with patch('src.core.training.standard_trainer.make_callbacks', return_value=[]):
+        with patch('src.core.training.component_factory.TrainingComponentFactory.create_callbacks', return_value=[]):
             result = trainer.train(model, ds, ds, cfg)
         
         assert model.optimizer is not None
@@ -152,7 +152,7 @@ class TestStandardTrainer:
         
         mock_callback = Mock(spec=tf.keras.callbacks.Callback)
         
-        with patch('src.core.training.standard_trainer.make_callbacks', return_value=[mock_callback]):
+        with patch('src.core.training.component_factory.TrainingComponentFactory.create_callbacks', return_value=[mock_callback]):
             result = trainer.train(model, ds, ds, cfg)
         
         # Callback should have been used
@@ -184,7 +184,7 @@ class TestStandardTrainer:
         })
         
         # Should not raise error, should use fallback loss/metrics
-        with patch('src.core.training.standard_trainer.make_callbacks', return_value=[]):
+        with patch('src.core.training.component_factory.TrainingComponentFactory.create_callbacks', return_value=[]):
             result = trainer.train(model, ds, ds, cfg)
         
         assert model.optimizer is not None

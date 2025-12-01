@@ -10,7 +10,41 @@ def classification_metrics() -> list[tf.keras.metrics.Metric]:
         tf.keras.metrics.AUC(name="auc", multi_label=True),
         tf.keras.metrics.Precision(name="precision"),
         tf.keras.metrics.Recall(name="recall"),
+        Sensitivity(name="sensitivity"),
+        Specificity(name="specificity"),
+        F1Score(name="f1"),
     ]
+
+class Sensitivity(tf.keras.metrics.Recall):
+    """
+    Sensitivity (True Positive Rate) is alias for Recall.
+    Added for medical terminology clarity.
+    """
+    def __init__(self, name="sensitivity", **kwargs):
+        super().__init__(name=name, **kwargs)
+
+class Specificity(tf.keras.metrics.Metric):
+    """
+    Specificity (True Negative Rate).
+    TNR = TN / (TN + FP)
+    """
+    def __init__(self, name="specificity", **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.true_negatives = tf.keras.metrics.TrueNegatives()
+        self.false_positives = tf.keras.metrics.FalsePositives()
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        self.true_negatives.update_state(y_true, y_pred, sample_weight)
+        self.false_positives.update_state(y_true, y_pred, sample_weight)
+
+    def result(self):
+        tn = self.true_negatives.result()
+        fp = self.false_positives.result()
+        return tn / (tn + fp + tf.keras.backend.epsilon())
+
+    def reset_state(self):
+        self.true_negatives.reset_state()
+        self.false_positives.reset_state()
 
 
 class F1Score(tf.keras.metrics.Metric):
