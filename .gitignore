@@ -65,3 +65,8 @@ wandb/
 *.mlpackage
 *.pb
 tmp/
+
+# Generated files
+*_executed.ipynb
+tuning_results/
+exported_models/
