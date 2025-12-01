@@ -31,6 +31,19 @@ python -c "import tensorflow as tf; print(tf.__version__)"
 pip install --force-reinstall tensorflow==2.17.0
 ```
 
+### GPU Not Detected (macOS)
+
+**Symptom:** `tf.config.list_physical_devices('GPU')` returns empty list on Apple Silicon.
+
+**Solution:**
+```bash
+# Install Metal plugin
+pip install tensorflow-metal
+
+# Verify
+python -c "import tensorflow as tf; print(len(tf.config.list_physical_devices('GPU')))"
+```
+
 ## Training Issues
 
 ### Out of Memory (OOM) Errors
