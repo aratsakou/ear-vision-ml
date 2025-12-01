@@ -25,13 +25,13 @@ from src.runtimes.image_inference import (
 
 @pytest.fixture
 def dummy_model(tmp_path: Path) -> tuple[Path, tf.keras.Model]:
-    """Create a dummy classification model."""
-    model = tf.keras.Sequential([
-        tf.keras.layers.Input(shape=(64, 64, 3)),
-        tf.keras.layers.Conv2D(16, 3, activation="relu", name="conv1"),
-        tf.keras.layers.GlobalAveragePooling2D(),
-        tf.keras.layers.Dense(3, activation="softmax", name="probs"),
-    ])
+    """Create a dummy classification model using Functional API."""
+    inputs = tf.keras.Input(shape=(64, 64, 3))
+    x = tf.keras.layers.Conv2D(16, 3, activation="relu", name="conv1")(inputs)
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    outputs = tf.keras.layers.Dense(3, activation="softmax", name="probs")(x)
+    
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
     
     # Save as SavedModel for inference runtime
     savedmodel_path = tmp_path / "test_model"
@@ -154,9 +154,45 @@ def test_run_image_inference(dummy_model: tuple[Path, tf.keras.Model], dummy_ima
         assert "confidence" in result
 
 
-@pytest.mark.skip(reason="Grad-CAM requires functional API model in Keras 3")
-def test_gradcam(dummy_model: tuple[Path, tf.keras.Model], dummy_images: list[Path]) -> None:
+def test_gradcam(dummy_model: tuple[Path, tf.keras.Model], dummy_images: list[Path], tmp_path: Path) -> None:
     """Test Grad-CAM visualization."""
-    # Note: Grad-CAM works better with Functional API models in Keras 3
-    # This test is skipped for Sequential models
-    pass
+    _, model = dummy_model
+    
+    # Ensure model is built and has inputs defined
+    if not model.built:
+        model.build((None, 64, 64, 3))
+        
+    # Create a dummy config
+    from omegaconf import OmegaConf
+    cfg = OmegaConf.create({
+        "explainability": {
+            "max_samples": 1,
+            "classification": {
+                "method": "grad_cam",
+                "grad_cam": {
+                    "layer_name": "conv1" # Use the name from dummy_model fixture
+                }
+            }
+        }
+    })
+    
+    from src.core.explainability.attribution_classification import ClassificationAttributor
+    
+    # Create dataset from dummy images
+    def load_img(path):
+        import cv2
+        img = cv2.imread(str(path))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, (64, 64))
+        img = img.astype(np.float32) / 255.0
+        return img
+        
+    images = [load_img(p) for p in dummy_images]
+    ds = tf.data.Dataset.from_tensor_slices((images, np.zeros(len(images)))).batch(1)
+    
+    attributor = ClassificationAttributor(cfg, tmp_path, model)
+    results = attributor.run_attribution({"val": ds})
+    
+    assert "attribution_summary_json" in results
+    assert "overlays_dir" in results
+    assert (tmp_path / "overlays" / "heatmap_0.png").exists()

@@ -19,9 +19,12 @@ class ClassificationAttributor:
 
     def run_attribution(self, datasets: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Runs classification attribution (Integrated Gradients).
+        Runs classification attribution (Integrated Gradients or Grad-CAM).
         """
         log.info("Running Classification Attribution...")
+        
+        method = self.cfg.explainability.classification.method
+        log.info(f"Attribution method: {method}")
         
         # Select samples (e.g., from validation set)
         # We need a tf.data.Dataset or similar
@@ -66,8 +69,13 @@ class ClassificationAttributor:
                 preds = self.model(img_input)
                 target_class_idx = tf.argmax(preds[0]).numpy()
                 
-                # Compute Integrated Gradients
-                heatmap = self._integrated_gradients(img_input, target_class_idx)
+                # Compute Attribution
+                if method == "grad_cam":
+                    layer_name = self.cfg.explainability.classification.grad_cam.layer_name
+                    heatmap = self._grad_cam(img_input, target_class_idx, layer_name)
+                else:
+                    # Default to Integrated Gradients
+                    heatmap = self._integrated_gradients(img_input, target_class_idx)
                 
                 # Save visualization
                 self._save_visualization(img.numpy(), heatmap, count, target_class_idx)
@@ -76,7 +84,8 @@ class ClassificationAttributor:
                     "sample_id": count,
                     "target_class": int(target_class_idx),
                     "confidence": float(preds[0][target_class_idx]),
-                    "heatmap_path": str(self.output_dir / f"heatmap_{count}.png")
+                    "heatmap_path": str(self.output_dir / f"heatmap_{count}.png"),
+                    "method": method
                 })
                 
                 count += 1
@@ -89,6 +98,64 @@ class ClassificationAttributor:
             "attribution_summary_json": str(summary_path),
             "overlays_dir": str(self.output_dir)
         }
+
+    def _grad_cam(self, image_tensor: tf.Tensor, target_class_idx: int, layer_name: Optional[str] = None) -> np.ndarray:
+        """
+        Computes Grad-CAM heatmap.
+        """
+        # Find the last convolutional layer if not specified
+        if not layer_name:
+            for layer in reversed(self.model.layers):
+                if isinstance(layer, tf.keras.layers.Conv2D):
+                    layer_name = layer.name
+                    break
+            if not layer_name:
+                # Fallback for models where Conv2D is inside a nested model (like MobileNet)
+                # This is a simplification; robust finding requires traversing the graph
+                # For now, we'll try to find a layer that outputs 4D tensor
+                for layer in reversed(self.model.layers):
+                    if len(layer.output_shape) == 4:
+                        layer_name = layer.name
+                        break
+        
+        if not layer_name:
+            log.warning("Could not find a suitable convolutional layer for Grad-CAM.")
+            return np.zeros(image_tensor.shape[1:3])
+
+        # Create a model that maps the input image to the activations of the last conv layer
+        # and the output predictions
+        grad_model = tf.keras.Model(
+            [self.model.inputs],
+            [self.model.get_layer(layer_name).output, self.model.output]
+        )
+
+        with tf.GradientTape() as tape:
+            conv_outputs, predictions = grad_model(image_tensor)
+            loss = predictions[:, target_class_idx]
+
+        # Extract filters and gradients
+        output = conv_outputs[0]
+        grads = tape.gradient(loss, conv_outputs)[0]
+
+        # Average gradients spatially
+        guided_grads = tf.cast(output > 0, "float32") * tf.cast(grads > 0, "float32") * grads
+        weights = tf.reduce_mean(guided_grads, axis=(0, 1))
+
+        # Build a ponderated map of filters according to gradients importance
+        cam = tf.reduce_sum(tf.multiply(weights, output), axis=-1)
+
+        # Apply ReLU
+        heatmap = tf.maximum(cam, 0)
+        
+        # Normalize
+        if tf.reduce_max(heatmap) > 0:
+            heatmap /= tf.reduce_max(heatmap)
+            
+        # Resize to image size
+        heatmap = heatmap.numpy()
+        heatmap = cv2.resize(heatmap, (image_tensor.shape[2], image_tensor.shape[1]))
+        
+        return heatmap
 
     def _integrated_gradients(self, image_tensor: tf.Tensor, target_class_idx: int, steps: int = 50) -> np.ndarray:
         """

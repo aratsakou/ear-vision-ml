@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Optional
+import importlib.resources
 
 import jsonschema
 import pandas as pd
@@ -21,8 +22,10 @@ def load_manifest(manifest_path: Path) -> dict[str, Any]:
         manifest = json.load(f)
     
     # Load schema
-    schema_path = Path(__file__).parents[1] / "contracts" / "dataset_manifest_schema.json"
-    with open(schema_path) as f:
+    # Load schema using importlib.resources for robustness
+    # This works regardless of how the package is installed (editable, wheel, etc.)
+    schema_resource = importlib.resources.files("src.core.contracts").joinpath("dataset_manifest_schema.json")
+    with schema_resource.open("r") as f:
         schema = json.load(f)
         
     jsonschema.validate(instance=manifest, schema=schema)
@@ -88,36 +91,37 @@ class Preprocessor(ABC):
     def preprocess(self, features: dict[str, Any], cfg: Any) -> tuple[tf.Tensor, tf.Tensor]:
         pass
 
-class ClassificationPreprocessor(Preprocessor):
+class BasePreprocessor(Preprocessor):
+    """Base preprocessor with common image loading logic."""
+    
+    def load_image(self, uri: tf.Tensor, size: tuple[int, int]) -> tf.Tensor:
+        """Loads, decodes, and resizes an image from a URI."""
+        path = tf.strings.regex_replace(uri, "^file://", "")
+        img_bytes = tf.io.read_file(path)
+        img = tf.io.decode_image(img_bytes, channels=3, expand_animations=False)
+        img = tf.image.resize(img, size)
+        img = tf.cast(img, tf.float32) / 255.0
+        return img
+
+class ClassificationPreprocessor(BasePreprocessor):
     def preprocess(self, features: dict[str, Any], cfg: Any) -> tuple[tf.Tensor, tf.Tensor]:
         image_size = (int(cfg.data.dataset.image_size[0]), int(cfg.data.dataset.image_size[1]))
         num_classes = int(cfg.data.dataset.num_classes)
         
-        uri = features['image_uri']
-        path = tf.strings.regex_replace(uri, "^file://", "")
-        
-        img_bytes = tf.io.read_file(path)
-        img = tf.io.decode_image(img_bytes, channels=3, expand_animations=False)
-        img = tf.image.resize(img, image_size)
-        img = tf.cast(img, tf.float32) / 255.0 
+        img = self.load_image(features['image_uri'], image_size)
         
         label = tf.cast(features['label'], tf.int32)
         label_one_hot = tf.one_hot(label, depth=num_classes)
         
         return img, label_one_hot
 
-class SegmentationPreprocessor(Preprocessor):
+class SegmentationPreprocessor(BasePreprocessor):
     def preprocess(self, features: dict[str, Any], cfg: Any) -> tuple[tf.Tensor, tf.Tensor]:
         image_size = (int(cfg.data.dataset.image_size[0]), int(cfg.data.dataset.image_size[1]))
         num_classes = int(cfg.data.dataset.num_classes)
         
         # Image
-        img_uri = features['image_uri']
-        img_path = tf.strings.regex_replace(img_uri, "^file://", "")
-        img_bytes = tf.io.read_file(img_path)
-        img = tf.io.decode_image(img_bytes, channels=3, expand_animations=False)
-        img = tf.image.resize(img, image_size)
-        img = tf.cast(img, tf.float32) / 255.0
+        img = self.load_image(features['image_uri'], image_size)
 
         # Mask
         mask_uri = features['mask_uri']
