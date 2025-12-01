@@ -22,15 +22,34 @@ def make_callbacks(cfg: Any, artifacts_dir: str) -> list[tf.keras.callbacks.Call
     # TensorBoard with histogram and profiling
     tb_config = getattr(cfg.training, "tensorboard", None)
     if tb_config and getattr(tb_config, "enabled", True):
+        import os
+        
+        # Determine log directory
+        # Priority:
+        # 1. AIP_TENSORBOARD_LOG_DIR (Vertex AI)
+        # 2. Configured log_dir (if we added it, but usually it's derived)
+        # 3. Default: artifacts_dir/tb
+        
+        log_dir = os.environ.get("AIP_TENSORBOARD_LOG_DIR")
+        if not log_dir:
+             log_dir = f"{artifacts_dir}/tb"
+             
         profile_batch = getattr(tb_config, "profile_batch", 0)
         if isinstance(profile_batch, str) and profile_batch.isdigit():
             profile_batch = int(profile_batch)
+            
+        histogram_freq = getattr(tb_config, "histogram_freq", 1)
+        write_graph = getattr(tb_config, "write_graph", True)
+        write_images = getattr(tb_config, "write_images", False)
+        update_freq = getattr(tb_config, "update_freq", "epoch")
+
         cbs.append(
             tf.keras.callbacks.TensorBoard(
-                log_dir=f"{artifacts_dir}/tb",
-                histogram_freq=1,
-                write_graph=True,
-                update_freq="epoch",
+                log_dir=log_dir,
+                histogram_freq=histogram_freq,
+                write_graph=write_graph,
+                write_images=write_images,
+                update_freq=update_freq,
                 profile_batch=profile_batch,
             )
         )

@@ -77,9 +77,11 @@ class StandardTrainer(Trainer, Component):
                 metrics=metrics
             )
         
-        # Ensure artifacts directory exists
+        # Ensure artifacts directory exists (local only)
         import os
-        os.makedirs(cfg.run.artifacts_dir, exist_ok=True)
+        artifacts_dir = str(cfg.run.artifacts_dir)
+        if not artifacts_dir.startswith("gs://"):
+            os.makedirs(artifacts_dir, exist_ok=True)
         
         callbacks = self.component_factory.create_callbacks(cfg, str(cfg.run.artifacts_dir))
         

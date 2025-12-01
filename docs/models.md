@@ -62,3 +62,15 @@ training:
     epochs: 5
 ```
 
+#### TensorBoard
+TensorBoard logging is enabled by default. It supports Cloud TensorBoard (Vertex AI) automatically.
+```yaml
+training:
+  tensorboard:
+    enabled: true
+    histogram_freq: 1
+    write_graph: true
+    write_images: false
+    update_freq: "epoch"
+```
+

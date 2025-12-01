@@ -6,7 +6,11 @@ batch_size: 32
 # TensorBoard logging
 tensorboard:
   enabled: true
-  profile_batch: "0"  # Disable profiling by default (use "10,20" to profile batches 10-20)
+  profile_batch: "0"  # Disable profiling by default
+  histogram_freq: 1
+  write_graph: true
+  write_images: false
+  update_freq: "epoch"
 
 # Model checkpointing
 checkpoint:

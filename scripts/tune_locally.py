@@ -62,6 +62,9 @@ def main(cfg: DictConfig) -> None:
                 target_path = param_specs[param_name].get("target")
                 if target_path:
                     # Use OmegaConf.update to set value at dot-notation path
+                    # Ensure value is native python type (not numpy) for OmegaConf
+                    if hasattr(param_value, "item"):
+                        param_value = param_value.item()
                     OmegaConf.update(trial_cfg, target_path, param_value)
                     
                     # Special handling for regularizer enablement if needed
