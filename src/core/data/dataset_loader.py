@@ -177,7 +177,12 @@ class ManifestDataLoader(DataLoader):
 class SyntheticDataLoader(DataLoader):
     def _make_synthetic_tfdata(self, cfg: Any) -> tf.data.Dataset:
         image_size = (int(cfg.data.dataset.image_size[0]), int(cfg.data.dataset.image_size[1]))
-        num_classes = int(cfg.data.dataset.num_classes)
+        # Use model.num_classes if available (for consistency with model output shape),
+        # otherwise fall back to data.dataset.num_classes (for unit tests)
+        try:
+            num_classes = int(cfg.model.num_classes)
+        except (AttributeError, KeyError):
+            num_classes = int(cfg.data.dataset.num_classes)
         batch_size = int(cfg.data.dataset.batch_size)
         
         h, w = image_size
