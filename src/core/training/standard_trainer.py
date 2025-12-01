@@ -6,6 +6,7 @@ import tensorflow as tf
 from src.core.interfaces import Trainer, Component
 from src.core.training.component_factory import TrainingComponentFactory
 from src.core.training.distillation import Distiller
+from src.core.config_utils import safe_get_bool
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class StandardTrainer(Trainer, Component):
                 log.warning(f"Failed to compute class weights: {e}")
 
         # Distillation support
-        if cfg.training.get("distillation", {}).get("enabled", False):
+        if safe_get_bool(cfg, "training.distillation.enabled", False):
             teacher_path = cfg.training.distillation.teacher_model_path
             if not teacher_path:
                 raise ValueError("Distillation enabled but teacher_model_path not provided")
@@ -86,7 +87,7 @@ class StandardTrainer(Trainer, Component):
         callbacks = self.component_factory.create_callbacks(cfg, str(cfg.run.artifacts_dir))
         
         # Add Hyperparameter Tuning Callback if enabled
-        if cfg.training.get("tuning", {}).get("enabled", False):
+        if safe_get_bool(cfg, "training.tuning.enabled", False):
             from src.core.tuning.vertex_vizier import VertexVizierTuner
             tuner = VertexVizierTuner(project=cfg.get("project", "local"), location=cfg.get("location", "local"))
             

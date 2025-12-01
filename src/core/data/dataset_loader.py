@@ -10,8 +10,10 @@ import jsonschema
 import pandas as pd
 import tensorflow as tf
 
-from src.core.interfaces import DataLoader
+from src.core.contracts.roi_contract import RoiBBox
 from src.core.data.augmenter import Augmenter, NoOpAugmenter, ConfigurableAugmenter
+from src.core.interfaces import DataLoader
+from src.core.config_utils import safe_get, safe_get_str
 
 
 log = logging.getLogger(__name__)
@@ -172,7 +174,7 @@ class ManifestDataLoader(DataLoader):
 
     def _load(self, cfg: Any, split: str) -> tf.data.Dataset:
         batch_size = int(cfg.data.dataset.batch_size)
-        sampling_strategy = cfg.data.dataset.get("sampling", {}).get("strategy", "none")
+        sampling_strategy = safe_get_str(cfg, "data.dataset.sampling.strategy", "none")
 
         ds_raw = load_dataset_from_manifest_dir(
             manifest_dir=cfg.data.dataset.manifest_path,
@@ -250,7 +252,7 @@ class DataLoaderFactory:
                 return ManifestDataLoader(SegmentationPreprocessor(), augmenter)
             else:
                 # Check if medical preprocessing is requested
-                preprocess_type = cfg.get("preprocess", {}).get("type", "standard")
+                preprocess_type = safe_get_str(cfg, "preprocess.type", "standard")
                 if preprocess_type == "medical":
                     from src.core.data.medical_preprocessing import MedicalPreprocessor
                     return ManifestDataLoader(MedicalPreprocessor(), augmenter)

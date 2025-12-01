@@ -278,7 +278,8 @@ class StandardExporter(Exporter, Component):
         input_shape = tuple(int(x) for x in cfg.model.input_shape)
         
         # 3. Export TFLite variants
-        tflite_enabled = getattr(cfg.export.export.tflite, "enabled", True) if hasattr(cfg, 'export') and hasattr(cfg.export, 'export') else True
+        from src.core.config_utils import safe_get_bool
+        tflite_enabled = safe_get_bool(cfg, "export.tflite.enabled", True)
         tflite_paths_dict = {}
         
         if tflite_enabled:
