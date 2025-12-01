@@ -33,6 +33,11 @@ def test_export_smoke(tmp_path: Path) -> None:
                     "quantize": True
                 }
             }
+        },
+        "data": {
+            "dataset": {
+                "id": "test_dataset"
+            }
         }
     })
     

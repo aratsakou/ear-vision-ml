@@ -59,12 +59,16 @@ class CoreMLExporter:
             classifier_config = None
             if task_name == "classification":
                 # For classification, we can add class labels if available
-                # This is a placeholder - in a real app we'd load labels from a file
-                pass
+                if hasattr(cfg.data.dataset, "class_names") and cfg.data.dataset.class_names:
+                    classifier_config = ct.ClassifierConfig(list(cfg.data.dataset.class_names))
+                elif hasattr(cfg.model, "num_classes"):
+                     # Fallback to numeric labels if names not available
+                     classifier_config = ct.ClassifierConfig([str(i) for i in range(int(cfg.model.num_classes))])
 
             mlmodel = ct.convert(
                 model,
                 inputs=[image_input],
+                classifier_config=classifier_config,
                 convert_to="mlprogram", # Use modern ML Program format
                 compute_precision=ct.precision.FLOAT16 if cfg.export.export.coreml.get("quantize", False) else ct.precision.FLOAT32
             )

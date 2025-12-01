@@ -315,19 +315,21 @@ The refactoring maintains performance while improving architecture:
 - **Memory efficient**: Singleton pattern prevents duplicate instances
 
 
-## Future Enhancements
+## Additional Implemented Enhancements
 
 ### 1. Configuration-Based DI
-Move service registration to configuration files:
-```yaml
-services:
-  model_builder: RegistryModelBuilder
-  trainer: StandardTrainer
-  exporter: StandardExporter
+Service registration can now be handled via configuration dictionaries:
+```python
+container.load_config({
+    "src.core.interfaces.Trainer": {
+        "impl": "src.core.training.standard_trainer.StandardTrainer",
+        "scope": "SINGLETON"
+    }
+})
 ```
 
 ### 2. Lifecycle Management
-Add lifecycle hooks for components:
+Components now support lifecycle hooks:
 ```python
 class Component(ABC):
     def initialize(self): pass
@@ -335,14 +337,18 @@ class Component(ABC):
 ```
 
 ### 3. Scoped Dependencies
-Support request-scoped dependencies for multi-tenant scenarios
+Support for different dependency scopes:
+- **SINGLETON**: One instance per container (default)
+- **TRANSIENT**: New instance every resolve
+- **REQUEST**: One instance per request scope
 
 ### 4. Auto-wiring
-Automatically resolve constructor dependencies:
+Automatic resolution of constructor dependencies based on type hints:
 ```python
 class MyTrainer:
     def __init__(self, model_builder: ModelBuilder, logger: Logger):
-        # Auto-injected
+        # Auto-injected by container
+        pass
 ```
 
 ## Conclusion

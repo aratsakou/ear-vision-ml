@@ -49,8 +49,9 @@ def _get_git_commit() -> str:
         )
         if result.returncode == 0:
             return result.stdout.strip()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to get git commit: {e}")
     return "unknown"
 
 
@@ -259,7 +260,7 @@ class StandardExporter(Exporter, Component):
         out_dir = Path(artifacts_dir) / "exports" / str(cfg.model.name)
         out_dir.mkdir(parents=True, exist_ok=True)
         
-        dataset_id = "unknown" # TODO: Pass this in or get from cfg
+        dataset_id = getattr(cfg.data.dataset, "id", "unknown")
         created_by = "unknown"
         enable_advanced_quantization = True
         enable_benchmarking = True
