@@ -32,6 +32,9 @@ def register_model(name: str):
 # Backward compatibility
 build_model = _builder.build
 
+# Expose the class for DI
+__all__ = ["RegistryModelBuilder", "register_model", "build_model"]
+
 
 
 # --- Helper for regularization ---

@@ -94,13 +94,15 @@ def main(cfg: DictConfig) -> None:
             
             # Load Data
             from src.core.data.dataset_loader import DataLoaderFactory
-            loader = DataLoaderFactory.get_loader(trial_cfg)
+            loader_factory = container.resolve(DataLoaderFactory)
+            loader = loader_factory.get_loader(trial_cfg)
             train_ds = loader.load_train(trial_cfg)
             val_ds = loader.load_val(trial_cfg)
             
             # Build Model
-            from src.core.models.factories.model_factory import build_model
-            model = build_model(trial_cfg)
+            from src.core.interfaces import ModelBuilder
+            model_builder = container.resolve(ModelBuilder)
+            model = model_builder.build(trial_cfg)
             
             # Train
             result = trainer.train(model, train_ds, val_ds, trial_cfg)

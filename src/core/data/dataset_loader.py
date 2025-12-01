@@ -241,8 +241,7 @@ class SyntheticDataLoader(DataLoader):
 
 
 class DataLoaderFactory:
-    @staticmethod
-    def get_loader(cfg: Any) -> DataLoader:
+    def get_loader(self, cfg: Any) -> DataLoader:
         if cfg.data.dataset.mode == "manifest":
             task_name = str(cfg.task.name).lower()
             augmenter = ConfigurableAugmenter(cfg)

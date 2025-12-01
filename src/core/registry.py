@@ -13,15 +13,17 @@ def register_core_services(cfg: Any):
     container = get_container()
     
     # Register DataLoader factory
-    # We wrap the static method to match the factory signature expected by Container
+    # Now it's a proper class
+    container.register_singleton(DataLoaderFactory, DataLoaderFactory())
+    
+    # We also register a factory for DataLoader interface that uses the factory class
     def create_dataloader(cfg: Any = cfg) -> DataLoader:
-        return DataLoaderFactory.get_loader(cfg)
+        factory = container.resolve(DataLoaderFactory)
+        return factory.get_loader(cfg)
     
     container.register_factory(DataLoader, create_dataloader)
     
     # Register Trainer factory
-    # StandardTrainer will be refactored to accept dependencies, 
-    # but for now we register it as is or with future dependencies
     def create_trainer() -> Trainer:
         component_factory = container.resolve(TrainingComponentFactory)
         return StandardTrainer(component_factory)
@@ -30,7 +32,10 @@ def register_core_services(cfg: Any):
     container.register_singleton(TrainingComponentFactory, TrainingComponentFactory())
     
     # Register ModelBuilder
-    from src.core.models.factories.model_factory import _builder
+    from src.core.models.factories.model_factory import _builder, RegistryModelBuilder
+    # Register the singleton instance we already have populated with decorators
+    container.register_singleton(RegistryModelBuilder, _builder)
+    # Also register as the interface
     from src.core.interfaces import ModelBuilder
     container.register_singleton(ModelBuilder, _builder)
 
