@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any
+from collections.abc import Callable
 
 import tensorflow as tf
 
@@ -17,6 +18,19 @@ class DataLoader(ABC):
     @abstractmethod
     def load_val(self, cfg: Any) -> tf.data.Dataset:
         pass
+
+class Component(ABC):
+    """Interface for components with lifecycle management."""
+    
+    def initialize(self) -> None:
+        """Called when the component is resolved/created."""
+        pass
+        
+    def cleanup(self) -> None:
+        """Called when the container is shut down."""
+        pass
+
+ModelFactoryFn = Callable[[Any], tf.keras.Model]
 
 class Trainer(ABC):
     @abstractmethod

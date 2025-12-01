@@ -21,7 +21,7 @@ from typing import Any
 import numpy as np
 import tensorflow as tf
 
-from src.core.interfaces import Exporter
+from src.core.interfaces import Exporter, Component
 from src.core.export.coreml_exporter import CoreMLExporter
 
 
@@ -173,9 +173,6 @@ def _export_tflite_variants(
     return paths
 
 
-
-
-
 def _benchmark_tflite_models(
     tflite_paths: dict[str, Path | None],
     input_shape: tuple[int, ...],
@@ -249,7 +246,12 @@ def _benchmark_tflite_models(
     return results
 
 
-class StandardExporter(Exporter):
+class StandardExporter(Exporter, Component):
+    def initialize(self) -> None:
+        print("StandardExporter initialized")
+
+    def cleanup(self) -> None:
+        print("StandardExporter cleaned up")
     def export(self, model: tf.keras.Model, cfg: Any, artifacts_dir: Any) -> dict[str, Any]:
         """
         Export model with state-of-the-art optimizations.
@@ -342,85 +344,7 @@ class StandardExporter(Exporter):
         # Return dict representation of ExportPaths for interface compatibility
         return asdict(export_paths)
 
-# Backwards compatibility
-def export_model(
-    cfg: Any,
-    model: tf.keras.Model,
-    out_dir: str | Path,
-    dataset_id: str = "unknown",
-    created_by: str = "unknown",
-    enable_advanced_quantization: bool = True,
-    enable_benchmarking: bool = True,
-) -> ExportPaths:
-    # Backward compatibility: use shared internal helpers directly
-    # rather than going through StandardExporter to avoid path mismatch
-    
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Export SavedModel
-    saved_model_dir = out_dir / "saved_model"
-    model.export(saved_model_dir)
-
-    # 2. Get input shape for quantization
-    input_shape = tuple(int(x) for x in cfg.model.input_shape)
-    
-    # 3. Export TFLite variants
-    tflite_enabled = getattr(cfg.export.export.tflite, "enabled", True) if hasattr(cfg, 'export') and hasattr(cfg.export, 'export') else True
-    tflite_paths_dict = {}
-    
-    if tflite_enabled:
-        tflite_paths_dict = _export_tflite_variants(
-            saved_model_dir=saved_model_dir,
-            out_dir=out_dir,
-            input_shape=input_shape,
-            enable_int8=enable_advanced_quantization,
-            enable_fp16=enable_advanced_quantization,
-        )
-    
-    # 4. Benchmark models
-    benchmark_results = None
-    benchmark_path = None
-    if enable_benchmarking and tflite_paths_dict:
-        benchmark_results = _benchmark_tflite_models(
-            tflite_paths=tflite_paths_dict,
-            input_shape=input_shape,
-        )
-        benchmark_path = out_dir / "benchmark_results.json"
-        benchmark_path.write_text(json.dumps(benchmark_results, indent=2))
-    
-    # 5. Create artifacts dict
-    artifacts = {
-        "saved_model_dir": str(saved_model_dir),
-        "tflite_float32": str(tflite_paths_dict.get("float32", "")),
-        "tflite_dynamic_range": str(tflite_paths_dict.get("dynamic_range", "")),
-        "tflite_fp16": str(tflite_paths_dict.get("fp16", "")),
-        "tflite_int8": str(tflite_paths_dict.get("int8", "")),
-        "benchmark_results": str(benchmark_path) if benchmark_path else "",
-    }
-    
-    # 6. Write manifest
-    manifest_path = _write_model_manifest(
-        out_dir=out_dir,
-        cfg=cfg,
-        model=model,
-        dataset_id=dataset_id,
-        created_by=created_by,
-        artifacts=artifacts,
-        benchmark_results=benchmark_results,
-    )
-    
-    return ExportPaths(
-        saved_model_dir=saved_model_dir,
-        tflite_path=tflite_paths_dict.get("float32"),
-        tflite_quant_path=tflite_paths_dict.get("dynamic_range"),
-        tflite_int8_path=tflite_paths_dict.get("int8"),
-        tflite_fp16_path=tflite_paths_dict.get("fp16"),
-        onnx_path=None,
-        coreml_path=None, # Not supported in legacy function
-        manifest_path=manifest_path,
-        benchmark_path=benchmark_path,
-    )
 
 
 if __name__ == "__main__":

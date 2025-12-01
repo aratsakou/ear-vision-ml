@@ -2,12 +2,17 @@ from typing import Any, Optional
 
 import tensorflow as tf
 
-from src.core.interfaces import Trainer
+from src.core.interfaces import Trainer, Component
 from src.core.training.component_factory import TrainingComponentFactory
 from src.core.training.distillation import Distiller
 from src.core.di import get_container
 
-class StandardTrainer(Trainer):
+class StandardTrainer(Trainer, Component):
+    def initialize(self) -> None:
+        print("StandardTrainer initialized")
+
+    def cleanup(self) -> None:
+        print("StandardTrainer cleaned up")
     def __init__(self, component_factory: Optional[TrainingComponentFactory] = None):
         self.component_factory = component_factory or TrainingComponentFactory()
 

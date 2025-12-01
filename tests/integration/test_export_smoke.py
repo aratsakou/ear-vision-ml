@@ -4,8 +4,7 @@ import numpy as np
 import tensorflow as tf
 from omegaconf import OmegaConf
 
-from src.core.export.exporter import export_model
-
+from src.core.export.exporter import StandardExporter
 
 def test_export_smoke(tmp_path: Path) -> None:
     """Smoke test for model export."""
@@ -38,16 +37,17 @@ def test_export_smoke(tmp_path: Path) -> None:
     })
     
     out_dir = tmp_path / "export_test"
-    paths = export_model(cfg, model, out_dir, dataset_id="ds_123", created_by="tester")
+    exporter = StandardExporter()
+    paths_dict = exporter.export(model, cfg, out_dir)
     
     # Verify paths
-    assert paths.saved_model_dir.exists()
-    assert paths.tflite_path.exists()
-    assert paths.tflite_quant_path.exists()
-    assert paths.manifest_path.exists()
+    assert Path(paths_dict["saved_model_dir"]).exists()
+    assert Path(paths_dict["tflite_path"]).exists()
+    assert Path(paths_dict["tflite_int8_path"]).exists()
+    assert Path(paths_dict["manifest_path"]).exists()
     
     # Verify TFLite inference
-    interpreter = tf.lite.Interpreter(model_path=str(paths.tflite_path))
+    interpreter = tf.lite.Interpreter(model_path=str(paths_dict["tflite_path"]))
     interpreter.allocate_tensors()
     
     input_details = interpreter.get_input_details()

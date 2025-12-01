@@ -314,20 +314,6 @@ The refactoring maintains performance while improving architecture:
 - **Lazy loading**: Factory pattern allows lazy instantiation
 - **Memory efficient**: Singleton pattern prevents duplicate instances
 
-## Backward Compatibility
-
-All existing functional APIs are maintained:
-
-```python
-# Old API still works
-from src.core.models.factories.model_factory import build_model
-model = build_model(cfg)
-
-# New API available
-from src.core.di import get_container
-builder = container.resolve(ModelBuilder)
-model = builder.build(cfg)
-```
 
 ## Future Enhancements
 
@@ -369,4 +355,4 @@ This architecture refactoring brings the codebase in line with modern software e
 ✅ **Maintainability**: DRY, clear separation of concerns, extensible design
 ✅ **Flexibility**: Easy to add new models, tasks, and export formats
 
-The refactoring maintains 100% backward compatibility while providing a modern, extensible foundation for future development.
+The refactoring provides a modern, extensible foundation for future development.

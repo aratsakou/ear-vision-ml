@@ -29,8 +29,7 @@ def register_model(name: str):
         return fn
     return decorator
 
-def build_model(cfg: Any) -> tf.keras.Model:
-    return _builder.build(cfg)
+
 
 # --- Implementations ---
 
