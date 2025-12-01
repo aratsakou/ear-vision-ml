@@ -12,6 +12,7 @@ defaults:
   - explainability/segmentation: segmentation
   - explainability/roi: roi
   - explainability/dataset_audit: dataset_audit
+  - tuning: default
   - _self_
 
 run:

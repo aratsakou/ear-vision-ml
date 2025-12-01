@@ -24,8 +24,8 @@ gcloud ai hp-tuning-jobs create \
   ...
 ```
 
-## Local Tuning (Optuna)
-You can run hyperparameter optimization locally using Optuna and Gaussian Processes.
+## Local Tuning (Keras Tuner)
+You can run hyperparameter optimization locally using Keras Tuner's Bayesian Optimization (Gaussian Process).
 
 ### Usage
 Run the `tune_locally.py` script:
@@ -34,10 +34,30 @@ python scripts/tune_locally.py +experiment=otoscopic_baseline
 ```
 
 ### Configuration
-The search space is currently defined in `scripts/tune_locally.py`. You can modify the `study_config` dictionary in that file to change the parameters being optimized.
+The search space is defined in `configs/tuning/default.yaml`. You can create new tuning configs (e.g., `configs/tuning/experiment_1.yaml`) and select them via the command line.
+
+**Example Config (`configs/tuning/default.yaml`)**:
+```yaml
+study_name: "otoscopic_optimization"
+objective: "val_acc"
+direction: "maximize"
+max_trials: 10
+parameters:
+  learning_rate:
+    target: "training.learning_rate" # Dot-notation path in main config
+    type: DOUBLE
+    min_value: 1e-5
+    max_value: 1e-2
+    scale: log
+```
+
+**Running with custom config**:
+```bash
+python scripts/tune_locally.py tuning=experiment_1
+```
 
 ### Output
 - **Logs**: Progress is printed to the console.
-- **Artifacts**: Each trial creates a separate artifact directory (e.g., `artifacts/run_name_trial_0`).
-- **Database**: Tuning state is saved to `tuning.db` (SQLite).
+- **Artifacts**: Each trial creates a separate artifact directory.
+- **Results**: Tuning results are saved in the `tuning_results` directory.
 

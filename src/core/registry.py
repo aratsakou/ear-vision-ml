@@ -41,9 +41,17 @@ def register_core_services(cfg: Any):
 
     # Register Tuner
     from src.core.tuning.hyperparam_tuner import HyperparameterTuner
-    from src.core.tuning.optuna_tuner import OptunaTuner
-    # We can default to OptunaTuner for local
-    container.register_factory(HyperparameterTuner, lambda: OptunaTuner())
+    from src.core.tuning.keras_tuner_impl import KerasTunerImpl
+    
+    def create_tuner() -> HyperparameterTuner:
+        # We can use cfg to configure the tuner if needed
+        # For now, we stick to a default directory or use one from cfg if available
+        tuning_dir = "tuning_results"
+        if hasattr(cfg, "tuning") and hasattr(cfg.tuning, "directory"):
+            tuning_dir = cfg.tuning.directory
+        return KerasTunerImpl(directory=tuning_dir)
+
+    container.register_factory(HyperparameterTuner, create_tuner)
 
 def register_task_services(cfg: Any):
     """

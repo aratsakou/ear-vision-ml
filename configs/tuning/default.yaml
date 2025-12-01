@@ -1,0 +1,23 @@
+study_name: "otoscopic_optimization"
+objective: "val_acc"
+direction: "maximize"
+max_trials: 10
+parameters:
+  learning_rate:
+    target: "training.learning_rate"
+    type: DOUBLE
+    min_value: 1e-5
+    max_value: 1e-2
+    scale: log
+  dropout:
+    target: "model.dropout"
+    type: DOUBLE
+    min_value: 0.0
+    max_value: 0.5
+    scale: linear
+  regularizer_l2:
+    target: "training.regularizer.l2"
+    type: DOUBLE
+    min_value: 1e-6
+    max_value: 1e-3
+    scale: log

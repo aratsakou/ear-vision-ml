@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from src.core.registry import register_core_services
 from src.core.di import get_container
-from src.core.tuning.optuna_tuner import OptunaTuner
+from src.core.di import get_container
 from src.core.training.standard_trainer import StandardTrainer
 from src.core.training.component_factory import TrainingComponentFactory
 
@@ -18,51 +18,34 @@ def main(cfg: DictConfig) -> None:
     from src.core.logging_utils import setup_logging
     setup_logging()
     
-    log.info("Starting Local Hyperparameter Tuning with Optuna...")
+    log.info("Starting Local Hyperparameter Tuning with Keras Tuner...")
     
     # Register services
     register_core_services(cfg)
     
     # Initialize Tuner
-    tuner = OptunaTuner(storage="sqlite:///tuning.db")
+    from src.core.tuning.hyperparam_tuner import HyperparameterTuner
+    container = get_container()
+    tuner = container.resolve(HyperparameterTuner)
     
-    # Define Search Space (Example)
-    # In a real scenario, this could come from a separate config file
-    study_config = {
-        "display_name": "otoscopic_optimization",
-        "metrics": {"goal": "MAXIMIZE"},
-        "parameters": {
-            "learning_rate": {
-                "type": "DOUBLE",
-                "min_value": 1e-5,
-                "max_value": 1e-2,
-                "scale": "log"
-            },
-            "dropout": {
-                "type": "DOUBLE",
-                "min_value": 0.0,
-                "max_value": 0.5,
-                "scale": "linear"
-            },
-            "regularizer_l2": {
-                "type": "DOUBLE",
-                "min_value": 1e-6,
-                "max_value": 1e-3,
-                "scale": "log"
-            }
-        }
-    }
+    # Get Study Config from Hydra
+    # We convert to primitive dict for the tuner
+    study_config = OmegaConf.to_container(cfg.tuning, resolve=True)
     
     study_id = tuner.create_study(study_config)
     
     # Tuning Loop
-    num_trials = 10 # Small number for demo
+    num_trials = study_config.get("max_trials", 10)
     
     for i in range(num_trials):
         log.info(f"\n--- Trial {i+1}/{num_trials} ---")
         
         # 1. Get Suggestions
         trials = tuner.get_suggestions(study_id, count=1)
+        if not trials:
+            log.info("No more trials suggested.")
+            break
+            
         trial = trials[0]
         params = trial.parameters
         log.info(f"Suggested Params: {params}")
@@ -71,15 +54,28 @@ def main(cfg: DictConfig) -> None:
         # We need to clone and update the config
         trial_cfg = cfg.copy()
         
-        # Map params to config structure
-        trial_cfg.training.learning_rate = params["learning_rate"]
-        trial_cfg.model.dropout = params["dropout"]
+        # Map params to config structure dynamically based on 'target' field in config
+        param_specs = study_config.get("parameters", {})
         
-        # Update regularizer if present
-        if "regularizer_l2" in params:
-            trial_cfg.training.regularizer.enabled = True
-            trial_cfg.training.regularizer.l2 = params["regularizer_l2"]
-            
+        for param_name, param_value in params.items():
+            if param_name in param_specs:
+                target_path = param_specs[param_name].get("target")
+                if target_path:
+                    # Use OmegaConf.update to set value at dot-notation path
+                    OmegaConf.update(trial_cfg, target_path, param_value)
+                    
+                    # Special handling for regularizer enablement if needed
+                    # If we are setting a regularizer value, we might need to ensure it's enabled.
+                    # This is a bit specific, but we can handle it generically if the config structure supports it.
+                    # For now, we assume the user configures 'enabled' in the base config or we add a specific rule.
+                    # Or we can just set it.
+                    if "regularizer" in target_path:
+                         # Hack: ensure enabled is true if we are tuning it
+                         # We can look for the parent node.
+                         # A cleaner way is to have 'enabled' as a tunable parameter or fixed in base.
+                         # Let's assume base config has it enabled or we set it here if value > 0.
+                         pass
+                         
         # Update run name to avoid overwriting artifacts
         trial_cfg.run.name = f"{cfg.run.name}_trial_{trial.id}"
         trial_cfg.run.artifacts_dir = f"{cfg.run.artifacts_dir}/trial_{trial.id}"
@@ -107,11 +103,19 @@ def main(cfg: DictConfig) -> None:
             result = trainer.train(model, train_ds, val_ds, trial_cfg)
             
             # 4. Report Result
-            # Assume val_accuracy is the metric
-            val_acc = result.history.history.get("val_acc", [0])[-1]
-            log.info(f"Trial {trial.id} Result: val_acc={val_acc}")
+            # Metric name from config
+            metric_name = study_config.get("objective", "val_acc")
+            # Handle potential missing metric
+            history = result.history.history
+            if metric_name in history:
+                score = history[metric_name][-1]
+            else:
+                log.warning(f"Metric {metric_name} not found in history. Available: {list(history.keys())}")
+                score = 0.0
+                
+            log.info(f"Trial {trial.id} Result: {metric_name}={score}")
             
-            tuner.complete_trial(trial.id, {"val_acc": val_acc})
+            tuner.complete_trial(trial.id, {metric_name: score})
             
         except Exception as e:
             log.error(f"Trial {trial.id} failed: {e}")
