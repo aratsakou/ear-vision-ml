@@ -33,9 +33,8 @@ We strictly follow TDD.
 
 ### 3. Documentation-Driven Development
 Every meaningful change requires documentation.
-1.  **Devlogs**: Create a new entry in `docs/devlog/` for every feature or significant change. Use `docs/devlog/0000-template.md`.
-2.  **ADRs**: For architectural decisions, create an entry in `docs/adr/`. Use `docs/adr/0000-template.md`.
-3.  **Docstrings**: All public functions and classes must have Google-style docstrings.
+1.  **ADRs**: For architectural decisions, create an entry in `docs/adr/`. Use `docs/adr/0000-template.md`.
+2.  **Docstrings**: All public functions and classes must have Google-style docstrings.
 
 ### 4. Code Quality
 Before committing, ensure your code meets our quality standards:
@@ -52,7 +51,6 @@ mypy src/core/
 
 ### 5. Submit a Pull Request
 -   Ensure all tests pass (`pytest`).
--   Include a link to your devlog entry.
 -   Describe the changes and the "why".
 
 ## 🏗 Architecture Guidelines
@@ -66,7 +64,7 @@ mypy src/core/
 
 -   [Repository Rules](docs/repo_rules.md)
 -   [Architecture Overview](ARCHITECTURE_REFACTORING.md)
--   [Developer Cheat Sheet (CLAUDE.md)](CLAUDE.md) - Contains useful commands.
+-   [AI Context (AI_CONTEXT.md)](AI_CONTEXT.md) - Context for AI assistants.
 
 ## ✅ Pull Request Checklist
 
@@ -77,7 +75,7 @@ Before submitting your PR, ensure:
 - [ ] Code is formatted (`ruff format .`)
 - [ ] Type checking passes (`mypy src/core/`)
 - [ ] New features have tests (maintain 100% pass rate)
-- [ ] Documentation updated (devlog entry required)
+- [ ] Documentation updated
 - [ ] No hardcoded paths or magic numbers
 - [ ] Config changes documented
 - [ ] Breaking changes noted in ADR

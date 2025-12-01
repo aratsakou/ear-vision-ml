@@ -15,9 +15,9 @@ Welcome to the `ear-vision-ml` documentation.
 ## 🏗 Architecture & Design
 
 -   **[Architecture Decisions (ADR)](adr/)**: Log of key architectural decisions.
--   **[Development Log (Devlog)](devlog/)**: Chronological log of implementation steps.
+
 
 ## 🤝 For Contributors
 
 -   **[Contributing Guide](../CONTRIBUTING.md)**: Main entry point for new contributors.
--   **[Developer Cheat Sheet](../CLAUDE.md)**: Useful commands for development.
+-   **[AI Context](../AI_CONTEXT.md)**: Context for AI assistants.

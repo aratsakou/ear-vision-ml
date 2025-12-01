@@ -22,6 +22,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.core.interfaces import Exporter
+from src.core.export.coreml_exporter import CoreMLExporter
 
 
 @dataclass(frozen=True)
@@ -172,37 +173,7 @@ def _export_tflite_variants(
     return paths
 
 
-def _export_coreml(
-    model: tf.keras.Model,
-    out_dir: Path,
-    cfg: Any,
-) -> Path | None:
-    """Export model to Core ML format."""
-    try:
-        import coremltools as ct  # type: ignore
-    except ImportError:
-        print("Warning: coremltools not installed. Skipping Core ML export.")
-        return None
 
-    try:
-        # Convert to Core ML
-        # Note: We use the Keras model directly.
-        # For more complex cases, we might need to use the SavedModel.
-        
-        # Determine inputs
-        # This is a simplified conversion. For production, we might need more specific config.
-        mlmodel = ct.convert(
-            model,
-            convert_to="mlprogram", # Use modern ML Program format
-            source="tensorflow",
-        )
-        
-        coreml_path = out_dir / "model.mlpackage"
-        mlmodel.save(str(coreml_path))
-        return coreml_path
-    except Exception as e:
-        print(f"Warning: Core ML export failed: {e}")
-        return None
 
 
 def _benchmark_tflite_models(
@@ -320,7 +291,8 @@ class StandardExporter(Exporter):
             
         coreml_path = None
         if coreml_enabled:
-            coreml_path = _export_coreml(model, out_dir, cfg)
+            exporter = CoreMLExporter()
+            coreml_path = exporter.export(model, out_dir, cfg)
         
         # 5. Benchmark models
         benchmark_results = None

@@ -23,7 +23,7 @@
 - **Reproducible**: Hydra configs + dataset manifests + git tracking
 - **Scalable**: Vertex AI integration + distributed training
 - **Tested**: 71 unit + integration tests (70 passed, 1 skipped) - **98.6% pass rate**
-- **Documented**: Complete docs + 11 devlogs + 5 ADRs
+- [x] Documented: Complete docs + 5 ADRs
 - **Multi-Layered Logging**: Console, file, JSON, performance, experiment tracking
 - **Advanced Reporting**: HTML, Markdown, JSON reports for experiments
 
@@ -163,9 +163,7 @@ Example metrics from smoke tests:
 ## 📚 Documentation
 
 - **[Documentation Index](docs/README.md)**: Start here for all guides.
-- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)**: Complete feature list
 - **[Architecture Refactoring](ARCHITECTURE_REFACTORING.md)**: DI and design patterns guide
-- **[Test Coverage Summary](TEST_COVERAGE_SUMMARY.md)**: Comprehensive test documentation
 - **[Repository Rules](docs/repo_rules.md)**: Contribution guidelines
 - **[Datasets Guide](docs/datasets.md)**: Schema and manifest format
 - **[Preprocessing Guide](docs/preprocessing.md)**: ROI contract and pipelines
