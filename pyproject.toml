@@ -28,6 +28,8 @@ dependencies = [
   "pyyaml>=6.0,<7.0",
   "gcsfs>=2024.1.0",
   "keras-tuner>=1.4,<2.0",
+  "python-json-logger>=2.0,<3.0",
+  "rich>=13.0,<14.0",
 ]
 
 [project.optional-dependencies]

@@ -163,6 +163,10 @@ def make_callbacks(cfg: Any, artifacts_dir: str) -> list[tf.keras.callbacks.Call
     return cbs
 
 
+import logging
+
+log = logging.getLogger(__name__)
+
 class WarmUpLearningRate(tf.keras.callbacks.Callback):
     """
     Learning rate warm-up callback.
@@ -180,7 +184,7 @@ class WarmUpLearningRate(tf.keras.callbacks.Callback):
         if epoch < self.warmup_epochs:
             lr = self.target_lr * (epoch + 1) / self.warmup_epochs
             tf.keras.backend.set_value(self.model.optimizer.lr, lr)
-            print(f"\nEpoch {epoch + 1}: Warm-up LR = {lr:.6f}")
+            log.info(f"Epoch {epoch + 1}: Warm-up LR = {lr:.6f}")
 
 
 class GradientAccumulation(tf.keras.callbacks.Callback):
@@ -222,4 +226,4 @@ class MixedPrecisionCallback(tf.keras.callbacks.Callback):
             loss_scale = self.model.optimizer.loss_scale
             if hasattr(loss_scale, "current_loss_scale"):
                 current_scale = loss_scale.current_loss_scale()
-                print(f"\nLoss scale: {current_scale}")
+                log.info(f"Loss scale: {current_scale}")
