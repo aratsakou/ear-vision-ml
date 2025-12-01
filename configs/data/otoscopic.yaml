@@ -1,0 +1,15 @@
+type: "otoscopic"
+dataset:
+  mode: "manifest"
+  manifest_path: "data/otoscopic/full"
+  split: "train"
+  batch_size: 32
+  steps_per_epoch: null # Use full dataset
+  val_steps: null # Use full validation set
+  num_classes: 5 # Based on build script
+  image_size: [224, 224]
+loader:
+  batch_size: 32
+  shuffle: true
+  num_workers: 4
+  drop_remainder: true

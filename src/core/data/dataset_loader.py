@@ -56,10 +56,10 @@ def load_dataset_from_manifest_dir(
         
     manifest = load_manifest(manifest_path)
     
-    if split not in manifest["splits"]:
-        raise ValueError(f"Split '{split}' not found in manifest. Available: {list(manifest['splits'].keys())}")
+    if split not in manifest["parquet_paths"]:
+        raise ValueError(f"Split '{split}' not found in manifest. Available: {list(manifest['parquet_paths'].keys())}")
         
-    parquet_files = manifest["splits"][split]
+    parquet_files = manifest["parquet_paths"][split]
     full_paths = [str(manifest_dir / p) for p in parquet_files]
     
     def generator() -> Generator[dict[str, Any], None, None]:

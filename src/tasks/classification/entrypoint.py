@@ -6,6 +6,7 @@ from omegaconf import DictConfig, OmegaConf
 from src.core.di import get_container
 from src.core.registry import register_core_services
 from src.core.interfaces import Trainer, DataLoader, ModelBuilder
+from src.core.export.exporter import StandardExporter
 
 log = logging.getLogger(__name__)
 
@@ -31,8 +32,31 @@ def main(cfg: DictConfig) -> None:
     
     history = trainer.train(model, train_ds, val_ds, cfg)
     
-    # 4. Export (Optional - handled by callbacks usually, but we can do explicit export if needed)
-    # The StandardTrainer handles callbacks which save the model.
+    # Save artifacts
+    import json
+    from pathlib import Path
+    
+    artifacts_dir = Path(cfg.run.artifacts_dir)
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save run metadata
+    run_meta = {
+        "run_id": cfg.run.name,
+        "config": OmegaConf.to_container(cfg, resolve=True),
+        "final_metrics": {k: v[-1] for k, v in history.history.history.items()}
+    }
+    with open(artifacts_dir / "run.json", "w") as f:
+        json.dump(run_meta, f, indent=2)
+        
+    # Save metrics
+    with open(artifacts_dir / "metrics.json", "w") as f:
+        json.dump(history.history.history, f, indent=2)
+
+    # Export logic using DI
+    from src.core.interfaces import Exporter
+    exporter = container.resolve(Exporter)
+    artifacts_dir = cfg.run.artifacts_dir
+    exporter.export(model, cfg, artifacts_dir)
     
     log.info("Training complete.")
 

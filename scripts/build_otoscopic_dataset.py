@@ -65,6 +65,10 @@ def collect_image_paths(source_dir: Path, subset_ratio: float = 1.0) -> pd.DataF
                 images = np.random.choice(images, size=n_subset, replace=False).tolist()
         
         for img_path in images:
+            if img_path.stat().st_size == 0:
+                print(f"Warning: Skipping empty file {img_path}")
+                continue
+                
             data.append({
                 "image_uri": f"file://{img_path.absolute()}",
                 "image_path": str(img_path),

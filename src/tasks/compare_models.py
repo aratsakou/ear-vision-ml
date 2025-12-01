@@ -26,7 +26,8 @@ def main(cfg: DictConfig) -> None:
     # Create Evaluator
     # We can also register Evaluator in DI, but for now manual instantiation is fine
     # as it's a specific task service
-    evaluator = ModelEvaluator(data_loader, TrainingComponentFactory())
+    component_factory = container.resolve(TrainingComponentFactory)
+    evaluator = ModelEvaluator(data_loader, component_factory)
     
     # Load Models
     baseline_path = cfg.get("baseline_model_path")

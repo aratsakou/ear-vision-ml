@@ -45,7 +45,8 @@ def main(cfg: DictConfig) -> None:
     
     # 2. Load Datasets
     log.info("Loading datasets...")
-    loader = DataLoaderFactory.get_loader(cfg)
+    from src.core.interfaces import DataLoader
+    loader = container.resolve(DataLoader)
     datasets = {
         "train": loader.load_train(cfg),
         "val": loader.load_val(cfg)

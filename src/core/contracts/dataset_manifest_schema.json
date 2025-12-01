@@ -4,34 +4,15 @@
   "properties": {
     "dataset_id": { "type": "string" },
     "task_name": { "type": "string" },
-    "version": { "type": "string" },
+    "dataset_version": { "type": "string" },
     "status": { "type": "string", "enum": ["active", "archived", "building"] },
-    "label_mapping_versions": {
-      "type": "object",
-      "properties": {
-        "ontology": { "type": "string" },
-        "labelbox_mappings": { "type": "array", "items": { "type": "string" } },
-        "task_mapping": { "type": "string" }
-      },
-      "required": ["ontology", "task_mapping"]
-    },
-    "sampling_config": {
-      "type": "object",
-      "properties": {
-        "hash": { "type": "string" },
-        "parameters": { "type": "object" }
-      },
-      "required": ["hash"]
-    },
-    "preprocess_pipeline": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "version": { "type": "string" }
-      },
-      "required": ["id", "version"]
-    },
-    "splits": {
+    "ontology_version": { "type": "string" },
+    "task_mapping_version": { "type": "string" },
+    "labelbox_project_mapping_versions": { "type": "array" },
+    "sampling": { "type": "object" },
+    "preprocess_pipeline_id": { "type": "string" },
+    "preprocess_pipeline_version": { "type": "string" },
+    "parquet_paths": {
       "type": "object",
       "patternProperties": {
         "^(train|val|test)$": {
@@ -41,17 +22,16 @@
       }
     },
     "created_by": { "type": "string" },
-    "created_at": { "type": "string", "format": "date-time" }
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" },
+    "notes": { "type": "string" }
   },
   "required": [
     "dataset_id",
     "task_name",
-    "version",
+    "dataset_version",
     "status",
-    "label_mapping_versions",
-    "sampling_config",
-    "preprocess_pipeline",
-    "splits",
+    "parquet_paths",
     "created_by",
     "created_at"
   ]

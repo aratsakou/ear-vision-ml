@@ -23,16 +23,21 @@ def register_core_services(cfg: Any):
     # StandardTrainer will be refactored to accept dependencies, 
     # but for now we register it as is or with future dependencies
     def create_trainer() -> Trainer:
-        return StandardTrainer(TrainingComponentFactory())
+        component_factory = container.resolve(TrainingComponentFactory)
+        return StandardTrainer(component_factory)
         
     container.register_factory(Trainer, create_trainer)
     container.register_singleton(TrainingComponentFactory, TrainingComponentFactory())
     
     # Register ModelBuilder
-    # We use the global _builder instance from model_factory which contains registered models
     from src.core.models.factories.model_factory import _builder
     from src.core.interfaces import ModelBuilder
     container.register_singleton(ModelBuilder, _builder)
+
+    # Register Exporter
+    from src.core.interfaces import Exporter
+    from src.core.export.exporter import StandardExporter
+    container.register_factory(Exporter, lambda: StandardExporter())
 
 def register_task_services(cfg: Any):
     """

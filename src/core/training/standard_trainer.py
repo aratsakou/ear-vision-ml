@@ -5,7 +5,7 @@ import tensorflow as tf
 from src.core.interfaces import Trainer, Component
 from src.core.training.component_factory import TrainingComponentFactory
 from src.core.training.distillation import Distiller
-from src.core.di import get_container
+from src.core.training.distillation import Distiller
 
 class StandardTrainer(Trainer, Component):
     def initialize(self) -> None:

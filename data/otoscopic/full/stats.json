@@ -1,0 +1,44 @@
+{
+  "train": {
+    "rows": 2400,
+    "class_distribution": {
+      "0": 480,
+      "1": 480,
+      "4": 480,
+      "3": 480,
+      "2": 480
+    },
+    "class_balance_ratio": 1.0,
+    "missing_values": {},
+    "duplicate_count": 0,
+    "baseline_stats": {}
+  },
+  "val": {
+    "rows": 300,
+    "class_distribution": {
+      "2": 60,
+      "1": 60,
+      "0": 60,
+      "3": 60,
+      "4": 60
+    },
+    "class_balance_ratio": 1.0,
+    "missing_values": {},
+    "duplicate_count": 0,
+    "baseline_stats": {}
+  },
+  "test": {
+    "rows": 300,
+    "class_distribution": {
+      "0": 60,
+      "1": 60,
+      "2": 60,
+      "3": 60,
+      "4": 60
+    },
+    "class_balance_ratio": 1.0,
+    "missing_values": {},
+    "duplicate_count": 0,
+    "baseline_stats": {}
+  }
+}

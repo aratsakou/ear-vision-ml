@@ -51,16 +51,11 @@ def main(cfg: DictConfig) -> None:
     with open(artifacts_dir / "metrics.json", "w") as f:
         json.dump(history.history.history, f, indent=2)
         
-    # Export model
-    if cfg.export.saved_model.enabled:
-        model.export(artifacts_dir / "saved_model")
+    # Export model using DI
+    from src.core.interfaces import Exporter
+    exporter = container.resolve(Exporter)
+    exporter.export(model, cfg, artifacts_dir)
     
-    if cfg.export.tflite.enabled:
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)
-        tflite_model = converter.convert()
-        with open(artifacts_dir / "model.tflite", "wb") as f:
-            f.write(tflite_model)
-
     log.info("Training complete.")
 
 if __name__ == "__main__":

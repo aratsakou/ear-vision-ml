@@ -87,20 +87,8 @@ def compute_dataset_statistics(df: pd.DataFrame, label_column: str = "label") ->
     # Duplicates
     duplicate_count = int(df.duplicated().sum())
 
-    # Baseline Statistics for Monitoring (Numeric Columns)
+    # Baseline Statistics removed as per request
     baseline_stats = {}
-    numeric_cols = df.select_dtypes(include=[float, int]).columns
-    for col in numeric_cols:
-        if col != label_column and col != "split":
-            baseline_stats[col] = {
-                "mean": float(df[col].mean()),
-                "std": float(df[col].std()),
-                "min": float(df[col].min()),
-                "max": float(df[col].max()),
-                # Store a small histogram for drift detection (e.g. 10 bins)
-                "histogram": [float(x) for x in np.histogram(df[col].dropna(), bins=10)[0]],
-                "bin_edges": [float(x) for x in np.histogram(df[col].dropna(), bins=10)[1]]
-            }
     
     return DatasetStatistics(
         total_samples=len(df),

@@ -9,7 +9,8 @@ class VertexVizierTuner(HyperparameterTuner):
     def __init__(self, project: str, location: str):
         self.project = project
         self.location = location
-        aiplatform.init(project=project, location=location)
+        if location != "local":
+            aiplatform.init(project=project, location=location)
         
     def create_study(self, study_config: Dict[str, Any]) -> str:
         # In a real implementation, this would use aiplatform.Study.create_or_load
