@@ -33,6 +33,7 @@ class Container:
         self._components: list[Component] = [] # Track components for cleanup
         self._resolving: set[Type[T]] = set()  # For circular dependency detection
         self._shutdown_registered = False
+        self._request_lock = threading.RLock()  # Lock for request scope
         
         # Register cleanup on exit
         atexit.register(self._atexit_cleanup)
@@ -87,9 +88,10 @@ class Container:
         if interface in self._services:
             return self._services[interface]
             
-        # 2. Check Request Cache
-        if interface in self._request_cache:
-            return self._request_cache[interface]
+        # 2. Check Request Cache (with lock)
+        with self._request_lock:
+            if interface in self._request_cache:
+                return self._request_cache[interface]
             
         # 3. Create Instance
         if interface in self._factories:
@@ -113,7 +115,8 @@ class Container:
                 if scope == Scope.SINGLETON:
                     self._services[interface] = instance
                 elif scope == Scope.REQUEST:
-                    self._request_cache[interface] = instance
+                    with self._request_lock:
+                        self._request_cache[interface] = instance
                     
                 return instance
             finally:
@@ -148,12 +151,14 @@ class Container:
         return cls(**final_kwargs)
 
     def begin_request(self):
-        """Start a new request scope."""
-        self._request_cache.clear()
+        """Start a new request scope (thread-safe)."""
+        with self._request_lock:
+            self._request_cache.clear()
 
     def end_request(self):
-        """End current request scope."""
-        self._request_cache.clear()
+        """End current request scope (thread-safe)."""
+        with self._request_lock:
+            self._request_cache.clear()
 
     def shutdown(self):
         """Cleanup all components."""

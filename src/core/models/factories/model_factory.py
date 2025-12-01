@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import Any
+import threading
 
 import tensorflow as tf
 
@@ -8,22 +9,36 @@ from src.core.interfaces import ModelBuilder
 ModelFactoryFn = Callable[[Any], tf.keras.Model]
 
 class RegistryModelBuilder(ModelBuilder):
+    """Thread-safe model registry builder."""
+    
     def __init__(self):
         self._registry: dict[str, ModelFactoryFn] = {}
+        self._lock = threading.RLock()  # Reentrant lock for thread safety
 
     def register(self, name: str, factory: ModelFactoryFn):
-        self._registry[name.lower()] = factory
+        """Register a model factory (thread-safe)."""
+        with self._lock:
+            self._registry[name.lower()] = factory
 
     def build(self, cfg: Any) -> tf.keras.Model:
+        """Build a model from config (thread-safe)."""
         name = str(cfg.model.name).lower()
-        if name not in self._registry:
-             raise ValueError(f"Unsupported model: {name}. Available: {list(self._registry.keys())}")
-        return self._registry[name](cfg)
+        
+        # Get snapshot of registry to avoid holding lock during build
+        with self._lock:
+            if name not in self._registry:
+                available = list(self._registry.keys())
+                raise ValueError(f"Unsupported model: {name}. Available: {available}")
+            factory = self._registry[name]
+        
+        # Build model without holding lock (may take time)
+        return factory(cfg)
 
 # Global registry instance
 _builder = RegistryModelBuilder()
 
 def register_model(name: str):
+    """Decorator to register a model factory function."""
     def decorator(fn: ModelFactoryFn):
         _builder.register(name, fn)
         return fn
