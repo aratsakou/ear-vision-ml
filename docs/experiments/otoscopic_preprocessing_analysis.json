@@ -1,0 +1,170 @@
+{
+  "dataset": "data/otoscopic/subset/manifest.json",
+  "analysis_date": "2025-12-01T07:53:45.017122",
+  "dimension_statistics": {
+    "num_samples": 100,
+    "widths": {
+      "min": 500,
+      "max": 500,
+      "mean": 500.0,
+      "std": 0.0
+    },
+    "heights": {
+      "min": 500,
+      "max": 500,
+      "mean": 500.0,
+      "std": 0.0
+    },
+    "aspect_ratios": {
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "file_sizes_kb": {
+      "min": 12.83984375,
+      "max": 59.2734375,
+      "mean": 30.96328125
+    },
+    "raw_dimensions": [
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ],
+      [
+        500,
+        500
+      ]
+    ]
+  },
+  "color_statistics": {
+    "brightness": {
+      "mean": 129.82316064,
+      "std": 16.033438126052907,
+      "min": 85.838832,
+      "max": 157.270396
+    },
+    "contrast": {
+      "mean": 58.996154347808584,
+      "std": 8.983183419233637
+    },
+    "saturation": {
+      "mean": 74.86727256,
+      "std": 24.222087711352028
+    }
+  },
+  "recommendations": {
+    "input_size": {
+      "recommended_size": 512,
+      "rationale": "Images average 500x500. Recommended 512x512 to minimize information loss.",
+      "alternatives": {
+        "224": "Fastest training, good for MobileNet",
+        "256": "Balanced speed/quality",
+        "384": "Higher quality, slower training",
+        "512": "Maximum quality, slowest training"
+      }
+    },
+    "augmentation": {
+      "rotation": {
+        "enabled": true,
+        "range": "\u00b115\u00b0",
+        "rationale": "Medical images can have slight orientation variations"
+      },
+      "horizontal_flip": {
+        "enabled": true,
+        "rationale": "Ear images can be from left or right ear"
+      },
+      "vertical_flip": {
+        "enabled": false,
+        "rationale": "Vertical orientation is medically significant"
+      },
+      "brightness": {
+        "enabled": true,
+        "range": "\u00b120%",
+        "rationale": "Brightness varies (std: 16.0)"
+      },
+      "contrast": {
+        "enabled": true,
+        "range": "\u00b115%",
+        "rationale": "Lighting conditions vary across images"
+      },
+      "zoom": {
+        "enabled": true,
+        "range": "0.9-1.1",
+        "rationale": "Simulate different camera distances"
+      }
+    }
+  }
+}
