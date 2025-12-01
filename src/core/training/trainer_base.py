@@ -25,6 +25,7 @@ def fit_model(
     train_ds: tf.data.Dataset,
     val_ds: tf.data.Dataset | None,
     callbacks: list[tf.keras.callbacks.Callback],
+    class_weight: dict[int, float] | None = None,
 ) -> TrainResult:
     epochs = int(cfg.training.epochs)
     history = model.fit(
@@ -32,6 +33,7 @@ def fit_model(
         validation_data=val_ds,
         epochs=epochs,
         callbacks=callbacks,
+        class_weight=class_weight,
         verbose=1,
     )
     return TrainResult(history=history)

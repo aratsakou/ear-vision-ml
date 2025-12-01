@@ -29,6 +29,27 @@ class StandardTrainer(Trainer, Component):
         log.debug(f"Created metrics: {metrics}")
         log.debug(f"Created optimizer: {optimizer}")
         
+        # Class Weighting
+        class_weight = None
+        if cfg.training.get("class_weights", False):
+            log.info("Computing class weights from training dataset...")
+            try:
+                from src.core.data.sampling import compute_class_weights
+                import numpy as np
+                
+                # Iterate dataset to get all labels
+                # Note: This might be slow for huge datasets.
+                # Ideally, we should get this from the manifest, but Trainer only sees Dataset.
+                y_train = []
+                for _, y in train_ds:
+                    # y is [batch, num_classes] (one-hot)
+                    y_train.extend(np.argmax(y.numpy(), axis=-1))
+                
+                class_weight = compute_class_weights(np.array(y_train))
+                log.info(f"Class weights: {class_weight}")
+            except Exception as e:
+                log.warning(f"Failed to compute class weights: {e}")
+
         # Distillation support
         if cfg.training.get("distillation", {}).get("enabled", False):
             teacher_path = cfg.training.distillation.teacher_model_path
@@ -74,7 +95,7 @@ class StandardTrainer(Trainer, Component):
 
             callbacks.append(tf.keras.callbacks.LambdaCallback(on_epoch_end=report_tuning_metrics))
 
-        result = fit_model(model, cfg, train_ds, val_ds, callbacks)
+        result = fit_model(model, cfg, train_ds, val_ds, callbacks, class_weight=class_weight)
         
         # Explainability Integration
         explain_cfg = cfg.get("explainability", {})

@@ -35,7 +35,8 @@ def load_dataset_from_manifest_dir(
     manifest_dir: Path | str, 
     split: str = "train",
     batch_size: int = 32,
-    shuffle: bool = True
+    shuffle: bool = True,
+    sampling_strategy: str = "none"
 ) -> tf.data.Dataset:
     """
     Loads a dataset from a manifest directory.
@@ -45,6 +46,7 @@ def load_dataset_from_manifest_dir(
         split: Dataset split to load ('train', 'val', 'test').
         batch_size: Batch size.
         shuffle: Whether to shuffle the dataset.
+        sampling_strategy: 'none' or 'oversample'.
         
     Returns:
         A tf.data.Dataset yielding dictionaries of features.
@@ -63,10 +65,32 @@ def load_dataset_from_manifest_dir(
     full_paths = [str(manifest_dir / p) for p in parquet_files]
     
     def generator() -> Generator[dict[str, Any], None, None]:
-        for p_path in full_paths:
-            df = pd.read_parquet(p_path)
-            for _, row in df.iterrows():
+        # If oversampling, we need to load all data first
+        if sampling_strategy == "oversample" and split == "train":
+            from src.core.data.sampling import oversample_dataframe
+            dfs = [pd.read_parquet(p) for p in full_paths]
+            full_df = pd.concat(dfs, ignore_index=True)
+            
+            # Assume 'label' is the target column for now (classification)
+            # For segmentation, oversampling based on image-level label is still valid if available
+            target_col = "label" if "label" in full_df.columns else None
+            
+            if target_col:
+                log.info(f"Oversampling dataset based on '{target_col}'...")
+                full_df = oversample_dataframe(full_df, target_col)
+            
+            # Shuffle in memory if requested
+            if shuffle:
+                full_df = full_df.sample(frac=1).reset_index(drop=True)
+                
+            for _, row in full_df.iterrows():
                 yield row.to_dict()
+        else:
+            # Standard streaming load
+            for p_path in full_paths:
+                df = pd.read_parquet(p_path)
+                for _, row in df.iterrows():
+                    yield row.to_dict()
 
     # Determine output signature from the first file
     first_df = pd.read_parquet(full_paths[0])
@@ -80,7 +104,7 @@ def load_dataset_from_manifest_dir(
         output_signature=output_signature
     )
     
-    if shuffle:
+    if shuffle and sampling_strategy != "oversample":
         ds = ds.shuffle(buffer_size=1000)
     
     ds = ds.batch(batch_size)
@@ -148,11 +172,13 @@ class ManifestDataLoader(DataLoader):
 
     def _load(self, cfg: Any, split: str) -> tf.data.Dataset:
         batch_size = int(cfg.data.dataset.batch_size)
+        sampling_strategy = cfg.data.dataset.get("sampling", {}).get("strategy", "none")
 
         ds_raw = load_dataset_from_manifest_dir(
             manifest_dir=cfg.data.dataset.manifest_path,
             split=split,
             batch_size=batch_size,
+            sampling_strategy=sampling_strategy,
         )
         
         # Preprocess (unbatch first to process individual items)

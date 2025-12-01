@@ -27,3 +27,22 @@ Optional columns:
 3. Generate `stats.json`.
 4. Create a config file in `configs/data/my_dataset.yaml` pointing to the manifest path.
 5. Verify loading with `tests/integration/test_dataset_build_smoke.py` (adapt as needed).
+
+## Handling Unbalanced Datasets
+
+### Class Weighting
+Automatically compute class weights based on training data frequency and apply them to the loss function.
+```yaml
+training:
+  class_weights: true
+```
+
+### Oversampling
+Balance the dataset by oversampling minority classes (random oversampling) during data loading.
+```yaml
+data:
+  dataset:
+    sampling:
+      strategy: "oversample"
+```
+

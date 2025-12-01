@@ -30,3 +30,35 @@ Training is configured via `configs/training/`. Key parameters:
 - **Mixed Precision**: Enable via `training.mixed_precision.enabled=true`.
 - **LR Scheduling**: Configure via `training.lr_schedule`.
 - **Early Stopping**: Configure via `training.early_stopping`.
+
+### Advanced Training Features
+
+#### Loss Functions
+You can specify advanced loss functions in `configs/training/default.yaml` or your experiment config:
+```yaml
+training:
+  loss:
+    type: "focal" # Options: focal, dice, dice_ce, tversky, label_smoothing, iou
+    alpha: 0.25
+    gamma: 2.0
+```
+
+#### Regularization
+L1 and L2 regularization can be applied to all model layers:
+```yaml
+training:
+  regularizer:
+    enabled: true
+    l1: 0.0
+    l2: 0.0001
+```
+
+#### Warm-up
+Gradually increase learning rate at the start of training:
+```yaml
+training:
+  warmup:
+    enabled: true
+    epochs: 5
+```
+

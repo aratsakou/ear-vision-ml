@@ -134,6 +134,13 @@ def make_callbacks(cfg: Any, artifacts_dir: str) -> list[tf.keras.callbacks.Call
     # Terminate on NaN
     cbs.append(tf.keras.callbacks.TerminateOnNaN())
     
+    # Warm-up Learning Rate
+    warmup_config = getattr(cfg.training, "warmup", None)
+    if warmup_config and getattr(warmup_config, "enabled", False):
+        target_lr = float(cfg.training.learning_rate)
+        warmup_epochs = getattr(warmup_config, "epochs", 5)
+        cbs.append(WarmUpLearningRate(target_lr=target_lr, warmup_epochs=warmup_epochs))
+
     return cbs
 
 
