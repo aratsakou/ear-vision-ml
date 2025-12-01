@@ -17,7 +17,8 @@ echo "1. Training MobileNetV3 (Lightweight Baseline)..."
 python -m src.tasks.classification.entrypoint \
   +experiment=otoscopic_baseline \
   model=cls_mobilenetv3 \
-  model.input_shape=[512,512,3] \
+  model.input_shape=[224,224,3] \
+  model.num_classes=5 \
   run.name=otoscopic_mobilenetv3 \
   run.artifacts_dir=$EXPERIMENT_DIR/mobilenetv3
 
@@ -30,7 +31,8 @@ echo "2. Training EfficientNetB0 (Balanced)..."
 python -m src.tasks.classification.entrypoint \
   +experiment=otoscopic_baseline \
   model=cls_efficientnetb0 \
-  model.input_shape=[512,512,3] \
+  model.input_shape=[224,224,3] \
+  model.num_classes=5 \
   run.name=otoscopic_efficientnetb0 \
   run.artifacts_dir=$EXPERIMENT_DIR/efficientnetb0
 
@@ -43,7 +45,8 @@ echo "3. Training ResNet50V2 (High Capacity)..."
 python -m src.tasks.classification.entrypoint \
   +experiment=otoscopic_baseline \
   model=cls_resnet50v2 \
-  model.input_shape=[512,512,3] \
+  model.input_shape=[224,224,3] \
+  model.num_classes=5 \
   run.name=otoscopic_resnet50v2 \
   run.artifacts_dir=$EXPERIMENT_DIR/resnet50v2
 

@@ -11,6 +11,7 @@ Features:
 
 from __future__ import annotations
 
+import logging
 import json
 import subprocess
 from dataclasses import asdict, dataclass
@@ -24,6 +25,7 @@ import tensorflow as tf
 from src.core.interfaces import Exporter, Component
 from src.core.export.coreml_exporter import CoreMLExporter
 
+log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ExportPaths:
@@ -50,8 +52,7 @@ def _get_git_commit() -> str:
         if result.returncode == 0:
             return result.stdout.strip()
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning(f"Failed to get git commit: {e}")
+        log.warning(f"Failed to get git commit: {e}")
     return "unknown"
 
 
@@ -169,7 +170,7 @@ def _export_tflite_variants(
             int8_path.write_bytes(tflite_int8)
             paths["int8"] = int8_path
         except Exception as e:
-            print(f"Warning: INT8 quantization failed: {e}")
+            log.warning(f"INT8 quantization failed: {e}")
     
     return paths
 
@@ -249,10 +250,10 @@ def _benchmark_tflite_models(
 
 class StandardExporter(Exporter, Component):
     def initialize(self) -> None:
-        print("StandardExporter initialized")
+        log.info("StandardExporter initialized")
 
     def cleanup(self) -> None:
-        print("StandardExporter cleaned up")
+        log.info("StandardExporter cleaned up")
     def export(self, model: tf.keras.Model, cfg: Any, artifacts_dir: Any) -> dict[str, Any]:
         """
         Export model with state-of-the-art optimizations.
@@ -264,6 +265,10 @@ class StandardExporter(Exporter, Component):
         created_by = "unknown"
         enable_advanced_quantization = True
         enable_benchmarking = True
+        
+        log.debug(f"Exporting model {cfg.model.name} to {out_dir}")
+        log.debug(f"Advanced quantization: {enable_advanced_quantization}")
+        log.debug(f"Benchmarking: {enable_benchmarking}")
 
         # 1. Export SavedModel
         saved_model_dir = out_dir / "saved_model"
@@ -284,6 +289,7 @@ class StandardExporter(Exporter, Component):
                 enable_int8=enable_advanced_quantization,
                 enable_fp16=enable_advanced_quantization,
             )
+            log.debug(f"TFLite variants exported: {list(tflite_paths_dict.keys())}")
         
 
             
@@ -307,6 +313,7 @@ class StandardExporter(Exporter, Component):
             )
             benchmark_path = out_dir / "benchmark_results.json"
             benchmark_path.write_text(json.dumps(benchmark_results, indent=2))
+            log.debug(f"Benchmark results saved to {benchmark_path}")
         
         # 5. Create artifacts dict
         artifacts = {

@@ -11,7 +11,15 @@ Features:
 
 from __future__ import annotations
 
-import json
+import logging
+
+log = logging.getLogger(__name__)
+
+# ... (inside build_parquet_dataset)
+            if result["warnings"]:
+                log.warning(f"Warnings for {split} split:")
+                for warning in result["warnings"]:
+                    log.warning(f"  - {warning}")
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -333,9 +341,9 @@ def build_parquet_dataset(
                 raise ValueError(f"Validation failed for {split} split: {result['issues']}")
             
             if result["warnings"]:
-                print(f"Warnings for {split} split:")
+                log.warning(f"Warnings for {split} split:")
                 for warning in result["warnings"]:
-                    print(f"  - {warning}")
+                    log.warning(f"  - {warning}")
     
     # Compute statistics if requested
     if compute_stats:

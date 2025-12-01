@@ -1,18 +1,20 @@
 from typing import Any, Optional
+import logging
 
 import tensorflow as tf
 
 from src.core.interfaces import Trainer, Component
 from src.core.training.component_factory import TrainingComponentFactory
 from src.core.training.distillation import Distiller
-from src.core.training.distillation import Distiller
+
+log = logging.getLogger(__name__)
 
 class StandardTrainer(Trainer, Component):
     def initialize(self) -> None:
-        print("StandardTrainer initialized")
+        log.info("StandardTrainer initialized")
 
     def cleanup(self) -> None:
-        print("StandardTrainer cleaned up")
+        log.info("StandardTrainer cleaned up")
     def __init__(self, component_factory: Optional[TrainingComponentFactory] = None):
         self.component_factory = component_factory or TrainingComponentFactory()
 
@@ -23,13 +25,17 @@ class StandardTrainer(Trainer, Component):
         metrics = self.component_factory.create_metrics(cfg)
         optimizer = self.component_factory.create_optimizer(cfg)
         
+        log.debug(f"Created loss: {loss}")
+        log.debug(f"Created metrics: {metrics}")
+        log.debug(f"Created optimizer: {optimizer}")
+        
         # Distillation support
         if cfg.training.get("distillation", {}).get("enabled", False):
             teacher_path = cfg.training.distillation.teacher_model_path
             if not teacher_path:
                 raise ValueError("Distillation enabled but teacher_model_path not provided")
             
-            print(f"Loading teacher model from {teacher_path}...")
+            log.info(f"Loading teacher model from {teacher_path}...")
             teacher_model = tf.keras.models.load_model(teacher_path)
             
             # Wrap student in Distiller
@@ -75,7 +81,7 @@ class StandardTrainer(Trainer, Component):
         if explain_cfg.get("enabled", False):
             try:
                 from src.core.explainability.registry import run_explainability
-                print("\nRunning Explainability Framework...")
+                log.info("\nRunning Explainability Framework...")
                 
                 run_ctx = {
                     "run_id": cfg.run.name,
@@ -89,8 +95,8 @@ class StandardTrainer(Trainer, Component):
                 
                 run_explainability(cfg, run_ctx, model, datasets)
             except Exception as e:
-                print(f"Explainability failed: {e}")
+                log.error(f"Explainability failed: {e}")
                 import traceback
-                traceback.print_exc()
+                traceback.print_exc() # Keep traceback printing for now or use log.exception
 
         return result

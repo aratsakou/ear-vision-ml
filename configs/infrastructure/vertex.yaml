@@ -1,0 +1,12 @@
+# Vertex AI infrastructure configuration
+# Used when running experiments on Google Cloud Vertex AI
+
+# Artifacts directory
+# Vertex AI sets AIP_MODEL_DIR environment variable
+# We use it if available, otherwise fallback to a GCS bucket or local path
+artifacts_dir: ${oc.env:AIP_MODEL_DIR,artifacts}
+
+# Logging
+log_vertex_experiments: true
+log_bigquery: true
+log_sql_dataset_version: true

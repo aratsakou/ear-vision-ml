@@ -12,7 +12,10 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../../../configs", config_name="config")
 def main(cfg: DictConfig) -> None:
-    print(OmegaConf.to_yaml(cfg))
+    from src.core.logging_utils import setup_logging
+    setup_logging()
+    
+    log.info(f"Resolved Configuration:\n{OmegaConf.to_yaml(cfg)}")
     
     # Register services
     register_core_services(cfg)

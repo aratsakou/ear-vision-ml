@@ -5,6 +5,7 @@ defaults:
   - preprocess: full_frame_v1
   - training: default
   - export: tflite
+  - infrastructure: local
   - evaluation: default
   - explainability: default
   - explainability/classification: classification
@@ -16,10 +17,10 @@ defaults:
 run:
   name: "local_smoke"
   seed: 42
-  artifacts_dir: "artifacts"
-  log_vertex_experiments: false
-  log_bigquery: false
-  log_sql_dataset_version: false
+  artifacts_dir: ${infrastructure.artifacts_dir}
+  log_vertex_experiments: ${infrastructure.log_vertex_experiments}
+  log_bigquery: ${infrastructure.log_bigquery}
+  log_sql_dataset_version: ${infrastructure.log_sql_dataset_version}
 
 # Global toggles for smoke tests.
 debug:

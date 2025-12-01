@@ -19,6 +19,9 @@ def main(cfg: DictConfig) -> None:
     CLI Entrypoint for Explainability.
     Runs explainability on an existing run or with a fresh config.
     """
+    from src.core.logging_utils import setup_logging
+    setup_logging()
+    
     log.info("Starting Explainability CLI...")
     
     # 1. Load Model

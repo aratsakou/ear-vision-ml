@@ -1,0 +1,11 @@
+# Local infrastructure configuration
+# Used when running experiments locally
+
+# Artifacts directory
+# For local runs, we use a relative path
+artifacts_dir: "artifacts"
+
+# Logging
+log_vertex_experiments: false
+log_bigquery: false
+log_sql_dataset_version: false

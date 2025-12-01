@@ -4,10 +4,13 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import json
+import logging
 
 from src.core.interfaces import DataLoader
 from src.core.evaluation.ab_test import ABTestAnalyzer
 from src.core.training.component_factory import TrainingComponentFactory
+
+log = logging.getLogger(__name__)
 
 class ModelEvaluator:
     """
@@ -19,36 +22,34 @@ class ModelEvaluator:
         self.data_loader = data_loader
         self.component_factory = component_factory
         self.ab_analyzer = ABTestAnalyzer()
+        log.debug(f"ModelEvaluator initialized with loader={data_loader.__class__.__name__}")
 
     def evaluate(self, model: tf.keras.Model, cfg: Any, split: str = "test") -> Dict[str, float]:
         """
         Evaluate model on a specific split.
         """
-        print(f"Evaluating model on {split} set...")
+        log.info(f"Evaluating model on {split} set...")
         
         # Load data
         if split == "test":
-            # We assume DataLoader has load_test or we use _load directly if exposed
-            # For now, let's assume we can use the internal _load if available or fallback
-            # ManifestDataLoader has _load but it's protected. 
-            # Let's check if we can add load_test to DataLoader interface or use a workaround.
-            # For this implementation, we'll try to use a public method or assume one exists.
-            # If not, we might need to extend DataLoader interface.
-            
             # Workaround: Check if it's ManifestDataLoader and use _load
             if hasattr(self.data_loader, "_load"):
+                log.debug("Using internal _load for test set")
                 ds = self.data_loader._load(cfg, "test")
             else:
                 # Fallback to val if test not explicitly supported in interface
-                print("Warning: load_test not in interface, using load_val")
+                log.warning("load_test not in interface, using load_val")
                 ds = self.data_loader.load_val(cfg)
         elif split == "val":
             ds = self.data_loader.load_val(cfg)
         else:
             ds = self.data_loader.load_train(cfg)
 
+        log.debug(f"Dataset loaded for {split}. Element spec: {ds.element_spec}")
+
         # Evaluate
         results = model.evaluate(ds, return_dict=True)
+        log.debug(f"Evaluation results: {results}")
         return results
 
     def compare_models(self, 
@@ -59,35 +60,39 @@ class ModelEvaluator:
         """
         Compare two models using A/B testing methodology on the test set.
         """
-        print(f"Comparing models using metric: {metric}...")
+        log.info(f"Comparing models using metric: {metric}...")
         
         # Load test data
-        # We need raw predictions for A/B testing, not just aggregated metrics
-        # So we iterate through the dataset
-        
         if hasattr(self.data_loader, "_load"):
             ds = self.data_loader._load(cfg, "test")
         else:
+            log.warning("Using validation set for comparison (test set not found)")
             ds = self.data_loader.load_val(cfg)
             
         # Get predictions
-        print("Generating predictions for Baseline model...")
+        log.info("Generating predictions for Baseline model...")
         baseline_preds = baseline_model.predict(ds)
-        print("Generating predictions for Candidate model...")
+        log.debug(f"Baseline predictions shape: {baseline_preds.shape}")
+        
+        log.info("Generating predictions for Candidate model...")
         candidate_preds = candidate_model.predict(ds)
+        log.debug(f"Candidate predictions shape: {candidate_preds.shape}")
         
         # Get labels
-        # We need to extract labels from the dataset
         labels = []
         for _, y in ds:
             labels.append(y.numpy())
         labels = np.concatenate(labels, axis=0)
+        log.debug(f"Labels shape: {labels.shape}")
         
         # Calculate metric per sample (for binary/categorical accuracy)
         # Assuming classification for now
         
         # Convert one-hot to index
-        y_true = np.argmax(labels, axis=1)
+        if len(labels.shape) > 1 and labels.shape[1] > 1:
+            y_true = np.argmax(labels, axis=1)
+        else:
+            y_true = labels.flatten()
         
         baseline_pred_cls = np.argmax(baseline_preds, axis=1)
         candidate_pred_cls = np.argmax(candidate_preds, axis=1)
@@ -96,22 +101,21 @@ class ModelEvaluator:
         candidate_correct = (candidate_pred_cls == y_true).astype(int)
         
         # Run A/B Test
-        # We compare the "success" (correct prediction) rates
-        
         baseline_acc = np.mean(baseline_correct)
         candidate_acc = np.mean(candidate_correct)
         
-        print(f"Baseline Accuracy: {baseline_acc:.4f}")
-        print(f"Candidate Accuracy: {candidate_acc:.4f}")
+        log.info(f"Baseline Accuracy: {baseline_acc:.4f}")
+        log.info(f"Candidate Accuracy: {candidate_acc:.4f}")
         
         # Use ABTestAnalyzer
-        # We treat this as comparing proportions of correct predictions
         ab_results = self.ab_analyzer.compare_proportions(
             control_success=int(np.sum(baseline_correct)),
             control_total=len(baseline_correct),
             treatment_success=int(np.sum(candidate_correct)),
             treatment_total=len(candidate_correct)
         )
+        
+        log.debug(f"A/B Test Results: {ab_results}")
         
         return {
             "baseline_metric": float(baseline_acc),
