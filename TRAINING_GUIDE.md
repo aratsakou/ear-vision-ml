@@ -175,6 +175,23 @@ gcloud ai custom-jobs create \
   --worker-pool-spec=machine-type=a2-highgpu-1g,accelerator-type=NVIDIA_TESLA_A100,accelerator-count=1...
 ```
 
+### D. Fine-Tuning / Transfer Learning
+You can freeze the backbone of the model to fine-tune only the head (classification layers). This is useful when training on small datasets using pre-trained weights.
+
+**Configuration:**
+```bash
+./scripts/local_train.sh \
+    model.transfer_learning.freeze_backbone=true
+```
+
+**Partial Unfreezing:**
+To unfreeze the last N layers of the backbone (e.g., for gradual fine-tuning):
+```bash
+./scripts/local_train.sh \
+    model.transfer_learning.freeze_backbone=true \
+    model.transfer_learning.unfreeze_top_n_layers=10
+```
+
 ---
 
 ## 5. Common Troubleshooting

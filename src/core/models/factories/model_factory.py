@@ -70,6 +70,76 @@ def _get_regularizer(cfg: Any) -> tf.keras.regularizers.Regularizer | None:
     return None
 
 
+# --- Helper for transfer learning ---
+def _freeze_layers(model: tf.keras.Model, cfg: Any) -> None:
+    """
+    Freeze layers for transfer learning based on config.
+    
+    Config schema:
+    model:
+      transfer_learning:
+        freeze_backbone: bool (default False)
+        unfreeze_top_n_layers: int (default 0)
+    """
+    tl_cfg = getattr(cfg.model, "transfer_learning", None)
+    if not tl_cfg or not getattr(tl_cfg, "freeze_backbone", False):
+        return
+
+    unfreeze_n = int(getattr(tl_cfg, "unfreeze_top_n_layers", 0))
+    
+    # We assume the model is constructed as Backbone + Head.
+    # If the model is a functional model where the backbone is a layer (e.g. MobileNetV3Small layer),
+    # we might need to dig into it.
+    # However, in our factory functions below, we often use `base = Application(...)` 
+    # and then `x = base(inp)`. In Keras 3 / recent TF, `base` is a Model/Layer.
+    
+    # Strategy:
+    # 1. Identify the backbone. In our builders, we don't return the backbone separately.
+    #    But we can iterate over layers.
+    # 2. If the model is a functional API model, `model.layers` includes the backbone layer 
+    #    if it was added as a single layer (common in Keras applications if used as a layer).
+    #    OR it includes all layers if `include_top=False` was used and we built on top.
+    
+    # Let's look at how we build them.
+    # e.g. base = MobileNetV3Small(...); x = base(inp) -> base is a layer in the new model.
+    
+    # We will try to find the "backbone" layer. It's usually the one with the most parameters 
+    # or specifically named if we named it. We didn't name it in the builders explicitly 
+    # but Keras assigns names like "mobilenetv3small".
+    
+    # A safer generic approach for this repo's style (base = App(...); x = base(inp)):
+    # The backbone is likely the second layer (after Input).
+    
+    # Let's try to find a layer that looks like a backbone (Functional model).
+    backbone = None
+    for layer in model.layers:
+        if isinstance(layer, tf.keras.Model):
+            backbone = layer
+            break
+            
+    if backbone:
+        # Freeze the backbone
+        backbone.trainable = False
+        
+        # If we need to unfreeze top N layers OF THE BACKBONE
+        if unfreeze_n > 0:
+            # We need to set trainable=True for the last N layers of the backbone
+            # Note: Setting backbone.trainable = False sets it for all its layers recursively usually.
+            # To unfreeze specific layers, we might need to set backbone.trainable = True 
+            # but set all non-target layers to False.
+            
+            backbone.trainable = True
+            for layer in backbone.layers[:-unfreeze_n]:
+                layer.trainable = False
+    else:
+        # Fallback: if we can't find a backbone sub-model, maybe the model IS the backbone + head flattened.
+        # This happens if we did `x = Conv2D(...)(inp)` manually.
+        # In that case, we just freeze the first K layers? Hard to guess.
+        # For now, we only support the "Backbone as a Layer" pattern used in this factory.
+        pass
+
+
+
 # --- Implementations ---
 
 @register_model("cls_mobilenetv3")
@@ -88,7 +158,9 @@ def build_cls_mobilenetv3(cfg: Any) -> tf.keras.Model:
     x = tf.keras.layers.GlobalAveragePooling2D()(base)
     x = tf.keras.layers.Dropout(dropout)(x)
     out = tf.keras.layers.Dense(num_classes, activation="softmax", name="probs", kernel_regularizer=regularizer)(x)
-    return tf.keras.Model(inp, out, name="cls_mobilenetv3")
+    model = tf.keras.Model(inp, out, name="cls_mobilenetv3")
+    _freeze_layers(model, cfg)
+    return model
 
 
 @register_model("cls_efficientnetb0")
@@ -107,7 +179,9 @@ def build_cls_efficientnetb0(cfg: Any) -> tf.keras.Model:
     x = tf.keras.layers.GlobalAveragePooling2D()(base)
     x = tf.keras.layers.Dropout(dropout)(x)
     out = tf.keras.layers.Dense(num_classes, activation="softmax", name="probs", kernel_regularizer=regularizer)(x)
-    return tf.keras.Model(inp, out, name="cls_efficientnetb0")
+    model = tf.keras.Model(inp, out, name="cls_efficientnetb0")
+    _freeze_layers(model, cfg)
+    return model
 
 
 @register_model("cls_resnet50v2")
@@ -126,7 +200,9 @@ def build_cls_resnet50v2(cfg: Any) -> tf.keras.Model:
     x = tf.keras.layers.GlobalAveragePooling2D()(base)
     x = tf.keras.layers.Dropout(dropout)(x)
     out = tf.keras.layers.Dense(num_classes, activation="softmax", name="probs", kernel_regularizer=regularizer)(x)
-    return tf.keras.Model(inp, out, name="cls_resnet50v2")
+    model = tf.keras.Model(inp, out, name="cls_resnet50v2")
+    _freeze_layers(model, cfg)
+    return model
 
 
 @register_model("seg_unet")
@@ -186,7 +262,11 @@ def build_seg_resnet50_unet(cfg: Any) -> tf.keras.Model:
     logits = tf.keras.layers.Resizing(input_shape[0], input_shape[1])(logits)
     out = tf.keras.layers.Softmax(axis=-1, name="probs")(logits)
     
-    return tf.keras.Model(inp, out, name="seg_resnet50_unet")
+    out = tf.keras.layers.Softmax(axis=-1, name="probs")(logits)
+    
+    model = tf.keras.Model(inp, out, name="seg_resnet50_unet")
+    _freeze_layers(model, cfg)
+    return model
 
 
 @register_model("cropper_mobilenetv3")
@@ -204,7 +284,10 @@ def build_cropper_mobilenetv3(cfg: Any) -> tf.keras.Model:
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Dense(64, activation="relu", kernel_regularizer=regularizer)(x)
     out = tf.keras.layers.Dense(5, activation="sigmoid", name="bbox_conf", kernel_regularizer=regularizer)(x)
-    return tf.keras.Model(inp, out, name="cropper_mobilenetv3")
+    out = tf.keras.layers.Dense(5, activation="sigmoid", name="bbox_conf", kernel_regularizer=regularizer)(x)
+    model = tf.keras.Model(inp, out, name="cropper_mobilenetv3")
+    _freeze_layers(model, cfg)
+    return model
 
 
 @register_model("cropper_resnet50v2")
@@ -221,4 +304,7 @@ def build_cropper_resnet50v2(cfg: Any) -> tf.keras.Model:
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Dense(64, activation="relu", kernel_regularizer=regularizer)(x)
     out = tf.keras.layers.Dense(5, activation="sigmoid", name="bbox_conf", kernel_regularizer=regularizer)(x)
-    return tf.keras.Model(inp, out, name="cropper_resnet50v2")
+    out = tf.keras.layers.Dense(5, activation="sigmoid", name="bbox_conf", kernel_regularizer=regularizer)(x)
+    model = tf.keras.Model(inp, out, name="cropper_resnet50v2")
+    _freeze_layers(model, cfg)
+    return model
